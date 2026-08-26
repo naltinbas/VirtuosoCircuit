@@ -26,6 +26,15 @@ export function snapPracticeRate(rate: number): number {
   return best;
 }
 
+/**
+ * Run-up before a practice pass. A pass that started less than one note
+ * approach early would begin with its first gems already part way down the
+ * highway, so the approach setting is the floor.
+ */
+export function practicePrerollMs(approachMs: number): number {
+  return Math.max(HIGHWAY.practicePrerollMs, approachMs);
+}
+
 export class PracticeSystem {
   readonly checkpointsMs: readonly number[];
   /** Song time at which the track counts as over, matching the performance rule. */

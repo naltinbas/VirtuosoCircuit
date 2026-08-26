@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AURA_CONFIG, HIGHWAY, PRACTICE_SPEEDS, SCORE_CONFIG } from "../src/app/Config";
 import type { Lane } from "../src/charts/ChartTypes";
 import type { NoteView } from "../src/gameplay/NoteScheduler";
-import { PracticeSystem, snapPracticeRate } from "../src/gameplay/PracticeSystem";
+import { PracticeSystem, practicePrerollMs, snapPracticeRate } from "../src/gameplay/PracticeSystem";
 import type { RhythmGame } from "../src/gameplay/RhythmGame";
 import type { EventSpec } from "./gamefixtures";
 import { buildTrack, collect, gameFor, makeGame } from "./gamefixtures";
@@ -93,6 +93,17 @@ describe("PracticeSystem", () => {
     // An enabled but empty range plays from the top too.
     practice.setLoop(5000, 5000, true);
     expect(practice.passStartMs).toBe(0);
+  });
+
+  it("runs up by a whole note approach when the approach is the longer one", () => {
+    expect(practicePrerollMs(HIGHWAY.approachMsMin)).toBe(HIGHWAY.practicePrerollMs);
+    expect(practicePrerollMs(HIGHWAY.approachMsMax)).toBe(HIGHWAY.approachMsMax);
+    const practice = new PracticeSystem(track);
+    practice.setLoop(6000, 14000, true);
+    // The gem at the loop start is at the top of the highway on the first
+    // frame of the pass, not already a quarter of the way down it.
+    expect(practice.entryMs(practicePrerollMs(HIGHWAY.approachMsMax))).toBe(6000 - HIGHWAY.approachMsMax);
+    expect(practice.entryMs(practicePrerollMs(HIGHWAY.approachMsMin))).toBe(6000 - HIGHWAY.practicePrerollMs);
   });
 
   it("keeps every note countable on a pass that starts at the top", () => {

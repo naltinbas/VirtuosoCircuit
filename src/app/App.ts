@@ -23,7 +23,7 @@ import {
 import { validateChartReport, type ValidationReport } from "../charts/ChartValidator";
 import { TRACK_DEFINITIONS, getTrack } from "../charts/TrackCatalog";
 import type { NoteView } from "../gameplay/NoteScheduler";
-import { PracticeSystem } from "../gameplay/PracticeSystem";
+import { PracticeSystem, practicePrerollMs } from "../gameplay/PracticeSystem";
 import { RhythmGame, type GameSnapshot, type PerformanceSummary } from "../gameplay/RhythmGame";
 import { InputManager, type ShortcutAction } from "../input/InputManager";
 import { KeyBindings } from "../input/KeyBindings";
@@ -1080,7 +1080,7 @@ export class App implements AppApi {
     // second one to arrive finds the clock already back at the start.
     if (!practice.shouldWrap(this.clock.songMs())) return;
     const start = practice.loopStartMs;
-    this.seekTo(practice.entryMs());
+    this.seekTo(this.practiceEntryMs(practice));
     session.game.skipBefore(start);
     this.hud.setCountIn(start, this.beatMs());
   }
@@ -1133,7 +1133,7 @@ export class App implements AppApi {
     const session = this.current;
     const practice = session?.practice;
     if (!session || !practice) return;
-    const entry = practice.entryMs();
+    const entry = this.practiceEntryMs(practice);
     // With the loop off the pass plays from the top, so the skip and the count
     // in follow the pass start rather than a loop start nobody is looping.
     const passStartMs = practice.passStartMs;
@@ -1164,7 +1164,7 @@ export class App implements AppApi {
     const passStartMs = practice.passStartMs;
     this.transport.setRate(this.effectiveRate());
     this.transport.setLoop(practice.loopStartMs, practice.loopEnabled ? practice.loopEndMs : null);
-    this.seekTo(practice.entryMs());
+    this.seekTo(this.practiceEntryMs(practice));
     session.game.skipBefore(passStartMs);
     this.clock.resume();
     this.transport.resume();
@@ -1184,6 +1184,11 @@ export class App implements AppApi {
 
   private countdownStartMs(): number {
     return -Math.max(HIGHWAY.countdownMs, this.settings.current.approachMs + 200);
+  }
+
+  /** Song time a practice pass enters at, run-up included. */
+  private practiceEntryMs(practice: PracticeSystem): number {
+    return practice.entryMs(practicePrerollMs(this.settings.current.approachMs));
   }
 
   private bindGame(game: RhythmGame): void {

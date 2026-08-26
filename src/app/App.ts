@@ -32,6 +32,7 @@ import { SettingsStore, type Settings } from "../persistence/SettingsStore";
 import { safeLocalStorage } from "../persistence/Storage";
 import { GameRenderer, type RenderFrame } from "../render/GameRenderer";
 import { Hud } from "../ui/Hud";
+import { ControlsPanel } from "../ui/ControlsPanel";
 import { MainMenu } from "../ui/MainMenu";
 import { PauseMenu } from "../ui/PauseMenu";
 import { ResultsScreen } from "../ui/ResultsScreen";
@@ -445,6 +446,7 @@ export class App implements AppApi {
     this.ui.register("PAUSED", new PauseMenu(this));
     this.ui.register("RESULTS", new ResultsScreen(this));
     this.ui.register("SETTINGS", new SettingsPanel(this));
+    this.ui.register("CONTROLS", new ControlsPanel(this));
 
     this.applySettings(this.settings.current);
     this.settings.on("change", ({ settings, changed }) => this.onSettingsChanged(settings, changed));

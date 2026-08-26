@@ -7,6 +7,7 @@
 
 import type { AppApi, DebugApiHooks, DebugFlags, DebugStats, InputLogEntry } from "../app/App";
 import { DIFFICULTY_LABELS, JUDGMENT_LABELS } from "../app/Config";
+import { GAMEPLAY_STATES } from "../app/GameState";
 import type { ValidationIssue } from "../charts/ChartValidator";
 import { formatOffset } from "../utils/TimeUtils";
 import { button, el } from "./UIManager";
@@ -49,6 +50,7 @@ export class DebugOverlay {
   private readonly lines: Line[] = [];
   private readonly toggleInputs: { flag: keyof DebugFlags; invert: boolean; input: HTMLInputElement }[] = [];
   private readonly inputList = el("ol", { className: "debug__log" });
+  private readonly restartButton: HTMLButtonElement;
   private readonly validationBox = el("div", { className: "debug__validation" });
   private timer: ReturnType<typeof setInterval> | null = null;
   private validationKey = "";
@@ -119,8 +121,12 @@ export class DebugOverlay {
     }
 
     const actions = el("div", { className: "debug__actions" });
+    this.restartButton = button("Restart run", () => this.app.restart(), {
+      className: "button button--inline",
+      nav: false,
+    });
     actions.append(
-      button("Restart run", () => this.app.restart(), { className: "button button--inline", nav: false }),
+      this.restartButton,
       button("Chart editor", () => this.hooks.openChartEditor(), { className: "button button--inline", nav: false }),
     );
 
@@ -165,6 +171,9 @@ export class DebugOverlay {
 
   private sync(): void {
     const stats = this.hooks.stats();
+    // Restarting is only a move a run in progress can make, so the button says so.
+    const canRestart = GAMEPLAY_STATES.has(stats.state) || stats.state === "PAUSED";
+    if (this.restartButton.disabled === canRestart) this.restartButton.disabled = !canRestart;
     for (const line of this.lines) {
       const text = line.read(stats);
       if (line.value.textContent !== text) line.value.textContent = text;

@@ -648,6 +648,9 @@ export class App implements AppApi {
   restart(): void {
     const session = this.current;
     if (!session) return;
+    // Only a live run can start again. The results screen still has its
+    // session, and the countdown it would ask for is not a move it can make.
+    if (!GAMEPLAY_STATES.has(this.router.state) && this.router.state !== "PAUSED") return;
     this.cancelDwell();
     this.cancelCountdown();
     this.input.clearHeld();

@@ -7,6 +7,7 @@ import {
   TEXT_SCALE_RANGE,
   AUDIO,
 } from "../app/Config";
+import { KeyBindings } from "../input/KeyBindings";
 import { EventEmitter } from "../utils/EventEmitter";
 import { clamp, roundTo } from "../utils/MathUtils";
 import type { StorageLike } from "./Storage";
@@ -90,10 +91,17 @@ function readBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === "boolean" ? value : fallback;
 }
 
+/**
+ * KeyBindings.conflicts is the authority on a usable map, and it already
+ * rejects the wrong length, a non-string and an empty code. A stored map it
+ * refuses cannot be saved from the Controls screen either, and loading one
+ * would hand a lane key to the shortcut table or leave two lanes on one code,
+ * so the fallback stands instead.
+ */
 function readBindings(value: unknown, fallback: string[]): string[] {
-  if (!Array.isArray(value) || value.length !== fallback.length) return [...fallback];
-  const codes = value.filter((code): code is string => typeof code === "string" && code.length > 0);
-  return codes.length === fallback.length ? codes : [...fallback];
+  if (!Array.isArray(value)) return [...fallback];
+  const codes = value as string[];
+  return KeyBindings.conflicts(codes).length === 0 ? [...codes] : [...fallback];
 }
 
 function readSpeed(value: unknown, fallback: number): number {

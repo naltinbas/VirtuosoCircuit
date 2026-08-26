@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { KeyBindings } from "../src/input/KeyBindings";
 import { HIGHWAY, KEYMAP_PRESETS } from "../src/app/Config";
 import { SAVE_KEY, SaveManager, type RecordableSummary, type UnlockInfo } from "../src/persistence/SaveManager";
 import { DEFAULT_SETTINGS, SETTINGS_KEY, SettingsStore, type Settings } from "../src/persistence/SettingsStore";
@@ -109,6 +110,18 @@ describe("SettingsStore", () => {
     expect(store.current.practiceSpeed).toBe(1);
     expect(store.current.keyBindings).toEqual([...KEYMAP_PRESETS.default]);
     expect(store.current.inputOffsetMs).toBe(0);
+  });
+
+  it("falls back when the stored bindings conflict with each other or the game", () => {
+    const conflicting = ["Escape", "KeyA", "KeyA", "F5", "Tab"];
+    expect(KeyBindings.conflicts(conflicting).length).toBeGreaterThan(0);
+    const storage = mapStorage({ [SETTINGS_KEY]: { keyBindings: conflicting } });
+    const store = new SettingsStore(storage, NO_MOTION);
+    expect(store.current.keyBindings).toEqual([...KEYMAP_PRESETS.default]);
+    store.save({ keyBindings: ["KeyA", "KeyS", "KeyD", "KeyJ", "ArrowUp"] });
+    expect(store.current.keyBindings).toEqual([...KEYMAP_PRESETS.default]);
+    store.save({ keyBindings: [...KEYMAP_PRESETS.arrows] });
+    expect(store.current.keyBindings).toEqual([...KEYMAP_PRESETS.arrows]);
   });
 
   it("ignores stored data that is not an object", () => {

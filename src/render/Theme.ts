@@ -8,7 +8,7 @@
 import { JUDGMENT_LABELS, LANE_IDENTITIES, THEME_COLORS, type Judgment, type LaneIdentity } from "../app/Config";
 import type { Lane } from "../charts/ChartTypes";
 import { clamp } from "../utils/MathUtils";
-import { computeLayout, type HighwayLayout } from "./Geometry";
+import { computeLayout, edgeXAtProgress, yAtProgress, type HighwayLayout } from "./Geometry";
 
 export interface Palette {
   /** Backdrop gradient, top to bottom. */
@@ -195,6 +195,18 @@ export function buildMetrics(width: number, height: number, dpr: number, textSca
   };
 }
 
+/**
+ * Translucent form of a palette color. Only cache builders call this: an rgba
+ * string per frame would allocate, so draw code uses ctx.globalAlpha instead.
+ */
+export function rgba(hex: string, alpha: number): string {
+  const value = Number.parseInt(hex.slice(1), 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 const TAU = Math.PI * 2;
 const STAR_OUTER = 1;
 const STAR_INNER = 0.46;
@@ -268,4 +280,22 @@ export function setGlow(ctx: CanvasRenderingContext2D, pal: Palette, color: stri
 export function clearGlow(ctx: CanvasRenderingContext2D): void {
   ctx.shadowBlur = 0;
   ctx.shadowColor = "transparent";
+}
+
+/** Traces one lane column between two progress values, for held lanes and flashes. */
+export function pathLaneColumn(
+  ctx: CanvasRenderingContext2D,
+  layout: HighwayLayout,
+  lane: Lane,
+  fromProgress: number,
+  toProgress: number,
+): void {
+  const yNear = yAtProgress(layout, fromProgress);
+  const yFar = yAtProgress(layout, toProgress);
+  ctx.beginPath();
+  ctx.moveTo(edgeXAtProgress(layout, lane, fromProgress), yNear);
+  ctx.lineTo(edgeXAtProgress(layout, lane + 1, fromProgress), yNear);
+  ctx.lineTo(edgeXAtProgress(layout, lane + 1, toProgress), yFar);
+  ctx.lineTo(edgeXAtProgress(layout, lane, toProgress), yFar);
+  ctx.closePath();
 }

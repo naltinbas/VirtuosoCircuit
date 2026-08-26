@@ -212,6 +212,8 @@ export const LAYOUT = {
   topWidthRatio: 0.38,
   receptorSize: 0.62,
   noteScaleAtSpawn: 0.38,
+  /** How far past the gate a note stays on the highway, as a fraction of the approach time. */
+  pastGateFraction: 0.15,
   popupRisePx: 48,
   popupLifeMs: 700,
   burstLifeMs: 450,

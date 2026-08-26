@@ -125,6 +125,37 @@ describe("phrase and trill rules", () => {
     const ok = compileChart(chart("virtuoso", p, shiftEvents(p, 40, "-2")), mapper);
     expect(codes(validateChart(ok, track), "warning")).not.toContain("phrase-split");
   });
+  it("measures the gap in authored beats, not in the opening tempo", () => {
+    const fast = fixtureTrack();
+    fast.tempoMap = [{ beat: 0, bpm: 120 }, { beat: 20, bpm: 240 }];
+    const fastTrack = compileTrack(fast);
+    const split = compileChart(
+      {
+        difficulty: "virtuoso",
+        events: [
+          { beat: 24, lanes: [0], phraseId: "x" },
+          { beat: 33, lanes: [1], phraseId: "x" },
+        ],
+      },
+      mapperFor(fastTrack),
+    );
+    expect(codes(validateChart(split, fastTrack), "warning")).toContain("phrase-split");
+
+    const slow = fixtureTrack();
+    slow.tempoMap = [{ beat: 0, bpm: 120 }, { beat: 20, bpm: 30 }];
+    const slowTrack = compileTrack(slow);
+    const held = compileChart(
+      {
+        difficulty: "virtuoso",
+        events: [
+          { beat: 24, lanes: [0], phraseId: "x" },
+          { beat: 28, lanes: [1], phraseId: "x" },
+        ],
+      },
+      mapperFor(slowTrack),
+    );
+    expect(codes(validateChart(held, slowTrack), "warning")).not.toContain("phrase-split");
+  });
   it("requires trills to alternate lanes with single notes", () => {
     const bad = compileChart(chart("virtuoso", trill("t", 0, "0 0 1 0")), mapper);
     expect(codes(validateChart(bad, track))).toContain("trill-lanes");

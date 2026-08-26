@@ -208,11 +208,12 @@ export function validateChart(
     }
     list.push(e);
   }
-  const beatsPerMs = track.metadata.bpm / 60000;
   for (const [id, list] of phrases) {
     if (list.length < 2) push("warning", "tiny-phrase", `phrase "${id}" has only ${list.length} event`);
     for (let k = 1; k < list.length; k++) {
-      const gapBeats = (list[k].timeMs - list[k - 1].timeMs) * beatsPerMs;
+      // Authored beats, because metadata.bpm is only the opening tempo and the
+      // rule is stated in beats.
+      const gapBeats = list[k].beat - list[k - 1].beat;
       if (gapBeats > 8) {
         push("warning", "phrase-split", `phrase "${id}" has a ${gapBeats.toFixed(1)}-beat gap; repeated sections need distinct phrase ids`, list[k].id);
         break;

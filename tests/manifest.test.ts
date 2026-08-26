@@ -65,9 +65,20 @@ describe("buildManifest", () => {
     expect(row.audioSource).toBe(AUDIO_SOURCE);
   });
 
-  it("claims nothing about recordings, only about compositions", () => {
+  it("never claims a recording is public domain or was used", () => {
+    // Saying "no recording is used" is exactly the disclosure we want, so the
+    // check is on the claim, not on the word.
     for (const row of buildManifest([fixtureTrack(), second(), ...TRACK_DEFINITIONS])) {
-      expect(textOf(row).toLowerCase()).not.toContain("recording");
+      const text = textOf(row).toLowerCase();
+      // Every sentence that mentions a recording must deny using one.
+      for (const sentence of text.split(/[.;]/)) {
+        if (!sentence.includes("recording")) continue;
+        expect(sentence).toMatch(/\b(no|not|never|without)\b/);
+      }
+      expect(text).not.toMatch(/public[- ]domain recording/);
+      // Track rows are synthesized; the favicon and typeface rows carry no audio.
+      const audio = row.audioSource.toLowerCase();
+      expect(audio === "not applicable" || audio.includes("synthes")).toBe(true);
     }
   });
 

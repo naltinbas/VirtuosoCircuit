@@ -911,7 +911,9 @@ export class App implements AppApi {
     if (!session) return;
     const from = songMs - HIGHWAY.freezeWarmupMs;
     this.seekTo(from);
-    this.stepTo(from, songMs, session.autoplay);
+    // The warm-up always plays itself: stepping it without autoplay would
+    // auto-miss every note in the window the screenshot is meant to show.
+    this.stepTo(from, songMs, true);
     this.clock.seek(songMs);
     this.clock.pause();
     this.transport.pause();

@@ -1,6 +1,6 @@
 # Virtuoso Circuit
 
-A five-lane keyboard rhythm game that runs in the browser. You are the signal conductor, and the hall you are working in has been dark for a long time; every performance you finish restores power to another wing of a neon conservatory, which is what opens the next piece in the catalog. Notes fall down a corridor toward the Resonance Gate, you press the lane key as each one crosses, and the score, the Resonance Chain and the Aura Meter follow from how close you were. Ten pieces, all public-domain classical, all arranged as note data in this repository and synthesized by the browser while you play. TypeScript, Vite 6, Canvas 2D, Web Audio, vitest. No runtime dependencies and no media files: the only asset in the build is a hand-written SVG favicon, and no sound, image or font is fetched or decoded.
+A five-lane keyboard rhythm game that runs in the browser. Notes fall down a corridor toward the Resonance Gate, you press the lane key as each one crosses it, and the score, the Resonance Chain and the Aura Meter follow from how close you were. The setting is a concert hall that has been dark a long time: you play the signal conductor, and finishing a piece lights another wing and opens the next track. Ten pieces, all public-domain classical, all stored as note data in this repository and synthesized by the browser while you play. TypeScript, Vite 6, Canvas 2D, Web Audio, vitest. No runtime dependencies and no media files: apart from the code, the only thing in the build is a hand-written SVG favicon, and no sound, image or font is fetched or decoded.
 
 ## Tracks
 
@@ -17,7 +17,7 @@ A five-lane keyboard rhythm game that runs in the browser. You are the signal co
 | Ludwig van Beethoven | Symphony No. 5 in C minor | Op. 67 | I. Allegro con brio, opening | Percussive orchestra: string motif, organ brass, bass and drums | Virtuoso |
 | Johann Sebastian Bach | Brandenburg Concerto No. 3 in G major | BWV 1048 | I. Allegro, opening ritornello | Fast ensemble strings over harpsichord and bass continuo | Maestro |
 
-The table is in catalog order, which is the order the wings open in. The first three are unlocked from the start; every later track names the one before it in `metadata.unlockAfter` and stays sealed until that one is completed in a performance run. Each track carries a novice, an apprentice and a virtuoso chart; tracks 7 to 10 also carry a maestro chart. The headline difficulty in the last column is `metadata.difficulty`, the level the arrangement was pitched at. It is a label and not a restriction: the track select card ignores it and lists every difficulty the track actually ships.
+The table is in catalog order, which is the order the wings open in. The first three are unlocked from the start; every later track names the one before it in `metadata.unlockAfter` and stays sealed until that one is completed in a performance run. Each track carries a novice, an apprentice and a virtuoso chart; tracks 7 to 10 also carry a maestro chart. The headline difficulty in the last column is `metadata.difficulty`, the level the arrangement was pitched at. It is only a label: the track select card ignores it and lists every difficulty the track actually ships.
 
 The Minuet in G is credited to Christian Petzold. It sits in the 1725 Notebook for Anna Magdalena Bach and was credited to Bach for about two centuries, which is how it ended up with a BWV Anhang number, and why the metadata carries an `attributionNote` that the credits screen prints.
 
@@ -28,7 +28,7 @@ npm install
 npm run dev        # vite dev server on http://localhost:5173
 npm run build      # tsc --noEmit, then vite build into dist/
 npm run preview    # serve the built dist/
-npm test           # vitest run, 397 tests across 24 files
+npm test           # vitest run, 398 tests across 24 files
 npm run typecheck  # tsc --noEmit on its own
 ```
 
@@ -40,20 +40,20 @@ Debug tooling (the F3 overlay, the chart editor, `window.vc`) is on whenever `im
 
 ## How audio scheduling and timing sync work
 
-There is one clock, and it is the `AudioContext`. `src/audio/AudioEngine.ts` is the only module that reads `ctx.currentTime`, and `src/audio/AudioClock.ts` turns that into song time with an anchor pair and a rate:
+Everything is timed against one clock, the `AudioContext`. `src/audio/AudioEngine.ts` is the only module that reads `ctx.currentTime`, and `src/audio/AudioClock.ts` turns that into song time with an anchor pair and a rate:
 
 ```
 songMs = songAnchorMs + (audioMs - audioAnchorMs) * rate   while running
 songMs = pausedSongMs                                      while paused
 ```
 
-Song time is negative during the count-in and reaches 0 on the first beat. `AudioClock` never reads a real clock itself, it calls the time source it was handed, which is what lets `tests/clock.test.ts` and `tests/transport.test.ts` drive a whole run from a fake number.
+Song time is negative during the count-in and reaches 0 on the first beat. `AudioClock` never reads a real clock itself; it calls the time source it was handed, which is what lets `tests/clock.test.ts` and `tests/transport.test.ts` drive a whole run from a fake number.
 
-`performance.now()` is a second timeline and is never used as a source of truth. It is reconciled against the audio clock by a single offset. `AudioEngine.sampleClock()` runs once per frame, pushes `audioMs - perfMs` into a ring of `AUDIO.clockSampleCount` (64) samples and takes the **maximum** as the offset in use. The maximum is the least delayed of the estimates: a sample taken on a frame that was itself late reads low, and averaging those in would drag every mapped input timestamp backwards. A sample more than `AUDIO.clockResyncMs` (100 ms) from the offset in use throws the whole ring away and starts again, which is how the mapping recovers after a suspended tab. Anything that asks for a time when the last sample is older than `AUDIO.clockSampleMaxAgeMs` (50 ms) triggers a fresh sample first.
+`performance.now()` is a second timeline and is never used as a source of truth. It is reconciled against the audio clock by a single offset. `AudioEngine.sampleClock()` runs once per frame, pushes `audioMs - perfMs` into a ring of `AUDIO.clockSampleCount` (64) samples and takes the maximum of them as the offset in use. The maximum is the least delayed of the estimates: a sample taken on a frame that was itself late reads low, and averaging those in would drag every mapped input timestamp backwards. A sample more than `AUDIO.clockResyncMs` (100 ms) from the offset in use throws the whole ring away and starts again, which is how the mapping recovers after a suspended tab. Anything that asks for a time when the last sample is older than `AUDIO.clockSampleMaxAgeMs` (50 ms) triggers a fresh sample first.
 
-The offset is read in two places, and they are really the same place. `perfToAudioMs(perfMs)` is `perfMs + offset` and maps a keyboard event's `timeStamp` onto the audio timeline; `sampleClock()` is that applied to the current performance time, and its result is the audio time the frame is drawn at. So the frame loop in `src/app/App.ts` and every press inside that frame go through one mapping, and a gem crossing the gate and a press at that moment agree by construction.
+Two functions read that offset, and they compute the same sum. `perfToAudioMs(perfMs)` is `perfMs + offset` and maps a keyboard event's `timeStamp` onto the audio timeline; `sampleClock()` applies it to the current performance time and returns the audio time the frame is drawn at. So the frame loop in `src/app/App.ts` and every press inside that frame go through one mapping, and a gem crossing the gate and a press at that moment agree by construction.
 
-The music is scheduled ahead of the clock by `src/audio/TrackTransport.ts`, from a `setInterval` at `AUDIO.schedulerIntervalMs` (25 ms), never from `requestAnimationFrame`. A dropped frame must not drop a note. Each tick walks a cursor over the sorted arrangement and hands the synth everything inside the horizon:
+The music is scheduled ahead of the clock by `src/audio/TrackTransport.ts`, from a `setInterval` at `AUDIO.schedulerIntervalMs` (25 ms) rather than from `requestAnimationFrame`, so a dropped frame cannot drop a note. Each tick walks a cursor over the sorted arrangement and hands the synth everything inside the horizon:
 
 ```
 horizon = songNow + AUDIO.lookaheadMs * rate
@@ -81,9 +81,9 @@ songMs = clock.songMsAtAudioMs(engine.perfToAudioMs(perfTs))
 
 and hands it to `RhythmGame.press(lane, songMs)`.
 
-Two offsets exist and they are not the same thing.
+There are two offsets and they do different jobs.
 
-The **judgment offset** decides when a note counts as hit. It is computed in the frame loop as
+The judgment offset decides when a note counts as hit. It is computed in the frame loop as
 
 ```
 judgmentOffsetMs = (outputLatencyMs + audioOffsetMs + inputOffsetMs) * rate
@@ -91,7 +91,7 @@ judgmentOffsetMs = (outputLatencyMs + audioOffsetMs + inputOffsetMs) * rate
 
 and `src/gameplay/RhythmGame.ts` subtracts it once at the top of every entry point (`update`, `press`, `release`, `activateFocusSurge`). That is the only place calibration touches judging, which is why every other module can pass raw song time around.
 
-The **display offset** decides where a gem is drawn:
+The display offset decides where a gem is drawn:
 
 ```
 displayMs = songMs - (outputLatencyMs + audioOffsetMs - visualOffsetMs) * rate
@@ -101,9 +101,9 @@ The two share the output latency and the audio offset and then part company: the
 
 Both scale with `rate`. The offsets are wall-clock quantities: the sound really does leave the speakers a fixed number of milliseconds late whatever speed the song is running at. At a practice rate of 0.5, a wall millisecond is half a song millisecond, so the correction expressed in song time has to be halved with it. Leaving the multiplication out would make every practice speed need its own calibration.
 
-`RhythmGame.setJudgmentOffsetMs` has one wrinkle. A **smaller** offset moves the judgment frame forward over notes that now have no gate under them, with no song time behind them to sweep them. Those notes are marked skipped rather than left to become misses the player never had a chance at.
+`RhythmGame.setJudgmentOffsetMs` has one wrinkle. A smaller offset moves the judgment frame forward over notes that now have no gate under them, with no song time behind them to sweep them. Those notes are marked skipped rather than left to become misses the player never had a chance at.
 
-Judging a press is a per-lane search, in `src/gameplay/NoteScheduler.ts`. Each lane keeps a cursor, which is a hint and nothing more: `candidate()` first walks the cursor past notes that have left the pending state, then scans forward for the **earliest still-pending note in that lane** whose time is within the miss window of the press, and stops as soon as it passes `t + missWindow`. Because the scan never assumes notes are consumed in order, a seek, a practice loop or a key event that arrives out of order cannot desynchronise it. A press that matches nothing is ignored entirely rather than punished.
+Judging a press is a per-lane search, in `src/gameplay/NoteScheduler.ts`. Each lane keeps a cursor, which is a hint and nothing more: `candidate()` first walks the cursor past notes that have left the pending state, then scans forward for the earliest still-pending note in that lane whose time is within the miss window of the press, and stops as soon as it passes `t + missWindow`. Because the scan never assumes notes are consumed in order, a seek, a practice loop or a key event that arrives out of order cannot desynchronise it. A press that matches nothing is ignored entirely rather than punished.
 
 `src/gameplay/NoteJudge.ts` turns the signed delta (positive is late) into a judgment, and it is the only place a delta becomes one. The results histogram reads the faint window for its range, and nothing else in `src/gameplay/` touches the table. From `src/app/Config.ts`, symmetric in both directions:
 
@@ -117,13 +117,13 @@ Judging a press is a per-lane search, in `src/gameplay/NoteScheduler.ts`. Each l
 
 A press between 165 and 200 ms out consumes the note as a miss. Beyond 200 ms it belongs to no note. A note nobody pressed is auto-missed by `sweep()` once corrected song time passes `timeMs + 200`, oldest first; the handler can stop the walk, which is how a run that ends part way through leaves the rest of the chart pending instead of shredding it.
 
-Scoring on top of that: the Harmony Factor is `1 + floor(chain / 10)` capped at 8, hold ticks pay 35 every 100 ms and are anchored to the chart rather than to the press (a completed hold always pays `floor(durationMs / 100)` ticks), a chord pays 250 when every lane of it resolves without a miss, a phrase pays 750, a trill phrase pays 300, and a Focus Surge doubles everything for 8 s while burning 50 aura. Releasing within `holdReleaseGraceMs` (100 ms) of the tail still completes the hold; releasing earlier costs 2 aura.
+Scoring on top of that: the Harmony Factor is `1 + floor(chain / 10)` capped at 8, hold ticks pay 35 every 100 ms and are anchored to the chart rather than to the press (a completed hold always pays `floor(durationMs / 100)` ticks), a chord pays 250 when every lane of it resolves without a miss, a phrase pays 750, a trill phrase pays 300, and a Focus Surge needs a full Aura Meter and then doubles everything for 8 s, spending 50 aura as it runs. Releasing within `holdReleaseGraceMs` (100 ms) of the tail still completes the hold; releasing earlier costs 2 aura.
 
 A lane can be reached by more than one key at once (see the fixed alternates below). `src/input/HeldKeyState.ts` holds the lane while any of its codes is down, so only the first key down presses and only the last key up releases. Rolling from the arrow key onto the letter key mid-hold does not drop the hold.
 
 ## How charts are stored and authored
 
-Charts and arrangements are authored in **beats** and compiled to milliseconds once, at load. Nothing at runtime knows about beats except the debug readout and the beat grid.
+Charts and arrangements are authored in beats and compiled to milliseconds once, at load. Nothing at runtime knows about beats except the debug readout and the beat grid.
 
 A track is one module in `src/charts/tracks/` that default-exports a `TrackDefinition` (`src/charts/ChartTypes.ts`): metadata, a tempo map, sections, an arrangement, and up to four `BeatChart`s. `src/charts/BeatMapper.ts` turns a tempo map into segments and converts in both directions:
 
@@ -133,7 +133,7 @@ timeMs = segment.startMs + (beat - segment.startBeat) * 60000 / segment.bpm
 
 A beat is the denominator of the time signature, so a beat is a quarter in 4/4 and an eighth in 3/8. `src/charts/ChartLoader.ts` compiles the arrangement into a flat, sorted `ScheduledNote[]`, derives `metadata.durationMs` from the last note plus a 400 ms tail, and compiles each `BeatChart` into a `CompiledChart` of `ChartEvent`s (`n0`, `n1`, ... by difficulty prefix) and `NoteInstance`s (`n0L2` for lane 2 of event `n0`). A chord is one event and several notes: the notes are what gets judged, the event is what pays the chord bonus.
 
-The compact notation lives in `src/charts/Authoring.ts` and is the part worth learning. Music:
+The compact notation lives in `src/charts/Authoring.ts`. Music:
 
 ```ts
 melody(0, "E4/1 E4 F4 G4 | G4 F4 E4 D4 | C4+E4/2 r/1 G3@0.5/1")
@@ -145,9 +145,9 @@ pitch, optional `+pitch` for a chord, optional `@velocity`, optional `/durationB
 lanes(0, "0/1 1 2 [0,2]/1 1h/2 &3h/2 r/1 4!/0.5", "phrase-a")
 ```
 
-a digit or a bracketed list for the lanes, `h` for a hold of the token's duration, `!` for an accent, `&` to place a token on the same beat as the previous one without advancing, `r` for a rest. Malformed tokens throw. Nothing is dropped silently.
+a digit or a bracketed list for the lanes, `h` for a hold of the token's duration, `!` for an accent, `&` to place a token on the same beat as the previous one without advancing, `r` for a rest. The parser throws on a malformed token rather than skipping over it.
 
-`src/charts/ChartValidator.ts` checks a compiled chart against the arrangement it belongs to and returns issues with a code and a level. The rules, in short: events sorted, non-negative and inside the track; lanes valid, unique and consistent with the event type; holds long enough and single-lane; chords within the size limit and never also holds; same-lane spacing measured from the **end** of the previous note in that lane; event spacing; a cap on how many keys have to be down at once (held tails count); a sliding one-second density window; phrase sanity, including trills that must alternate lanes; and every event landing within `CHART_ALIGNMENT_TOLERANCE_MS` (25 ms) of an actual arrangement note onset. That last rule is what stops a chart from asking for a key press over silence. Every code and what it means is in `docs/chart-format.md`.
+`src/charts/ChartValidator.ts` checks a compiled chart against the arrangement it belongs to and returns issues with a code and a level. The rules, in short: events sorted, non-negative and inside the track; lanes valid, unique and consistent with the event type; holds long enough and on one lane; chords within the size limit and never also holds; same-lane spacing measured from the end of the previous note in that lane; event spacing; a cap on how many keys have to be down at once (held tails count); a sliding one-second density window; phrase sanity, including trills that must alternate lanes; and every event landing within `CHART_ALIGNMENT_TOLERANCE_MS` (25 ms) of an actual arrangement note onset. That last rule is what stops a chart from asking for a key press over silence. Every code and what it means is in `docs/chart-format.md`.
 
 The density limits are per difficulty, from `DENSITY_LIMITS` in `src/app/Config.ts`:
 
@@ -160,14 +160,14 @@ The density limits are per difficulty, from `DENSITY_LIMITS` in `src/app/Config.
 | Keys at once | 2 | 3 | 3 | 3 |
 | Shortest hold | 400 ms | 350 ms | 300 ms | 250 ms |
 
-`tests/tracks.test.ts` runs `validateTrack` over every module in `src/charts/tracks/` and fails the suite on any error. Warnings are printed rather than failed, because a few of them (a chord over a texture that strikes less often, for one) are judgement calls an author makes on purpose.
+`tests/tracks.test.ts` runs `validateTrack` over every module in `src/charts/tracks/` and fails the suite on any error. Warnings are printed rather than failed, because a few of them are judgement calls an author makes on purpose: the `thin-chord` warning fires when a chord asks for more keys than the arrangement has note onsets under it, usually a chart pattern reused over a thinner texture.
 
-There are two seek operations, and this is the part of the design that is easy to miss. `App.seekTo(ms)` calls **both**, in this order:
+There are two seek operations, and `App.seekTo(ms)` calls both, in this order:
 
 - `rearmFrom(ms)` puts every note at or after `ms` back on the highway: the runtime state is cleared and any judgment it had already earned is subtracted from the score, so replaying a passage does not double-count it. Chord and phrase trackers are rebuilt from the surviving note states, which means a phrase that lost a note can be earned again while one that is still intact keeps its bonus.
-- `skipBefore(ms)` marks everything **before** `ms` that is still pending as skipped. Skipped notes drop out of `totalNotes` and out of the accuracy denominator, and they block any chord or phrase they belonged to. Without this, jumping into the middle of a track would auto-miss the whole first half the moment the sweep caught up.
+- `skipBefore(ms)` marks everything before `ms` that is still pending as skipped. Skipped notes drop out of `totalNotes` and out of the accuracy denominator, and they block any chord or phrase they belonged to. Without this, jumping into the middle of a track would auto-miss the whole first half the moment the sweep caught up.
 
-Rearm is what makes a practice loop repeatable; skip is what makes jumping forward fair. A practice loop wrap uses both: it seeks to the loop entry, which is the loop start minus a run-up of at least the approach setting so the first gem is not already half way down the corridor, and then skips again up to the loop start so the notes passed during the run-up do not count.
+Rearm is what makes a practice loop repeatable, and skip is what keeps a jump forward from counting notes that never came down. A practice loop wrap uses both: it seeks to the loop entry, which is the loop start minus a run-up of at least the approach setting so the first gem is not already half way down the corridor, and then skips again up to the loop start so the notes passed during the run-up do not count.
 
 ## How to add a track
 
@@ -183,13 +183,13 @@ In a debug build, F3 then "Chart editor" opens `src/ui/ChartEditor.ts`, which li
 
 ## How calibration works
 
-Nothing in calibration moves the music. The offsets change when a note counts as hit and where it is drawn, and that is all.
+None of this moves the music. The offsets change when a note counts as hit and where the gems are drawn.
 
 `src/ui/CalibrationPanel.ts` holds three sliders, each clamped to +/-250 ms in 1 ms steps and each written straight through to `SettingsStore`:
 
-- **Audio offset**, positive when the sound reaches you later than the game thinks. It is the one offset that feeds both the judgment offset and the display offset.
-- **Visual offset**, drawing only. Positive draws the gems as if time were later, so they reach the gate earlier.
-- **Input offset**, judging only. Positive forgives presses that land late. This is what the guided test sets.
+- Audio offset, positive when the sound reaches you later than the game thinks. It is the one offset that feeds both the judgment offset and the display offset.
+- Visual offset, drawing only. Positive draws the gems as if time were later, so they reach the gate earlier.
+- Input offset, judging only. Positive forgives presses that land late. This is the one the guided test sets.
 
 On top of the sliders the engine reads `ctx.outputLatency` when the browser reports a usable one, and falls back to `baseLatency` otherwise. `outputLatencySupported` says which happened, and the panel changes its advice accordingly: with no reported latency the guided test matters more than the sliders do.
 
@@ -197,25 +197,25 @@ The panel runs its own metronome at `GUIDED_CALIBRATION.bpm` (100), scheduled wi
 
 The guided test measures how late your presses land. `src/audio/CalibrationManager.ts` is pure: it takes audio timestamps and returns numbers. Each tap has the output latency subtracted (you react to what you hear, and that lags the clock), is measured against the nearest beat, and is thrown out on the spot if it is more than `rejectBeyondMs` (180 ms) away. No user offset is applied during the measurement, since finding one is the point. When the test ends, the surviving taps are filtered again at `madFactor` (2.5) median absolute deviations from their median, and the median of what is left, rounded and clamped, becomes the suggested input offset. The test needs `minTaps` (12) steady taps to offer a suggestion and stops on its own at `maxTaps` (24).
 
-The suggestion is offered, not applied. "Use this offset" writes `inputOffsetMs` and sets the `calibrated` flag in the save file; "Discard" leaves everything alone. "Save and close" sets the same flag without changing an offset, which is how the game knows not to nag. "Reset offsets" writes all three back to 0.
+The panel offers that number and leaves the decision to you. "Use this offset" writes `inputOffsetMs` and sets the `calibrated` flag in the save file; "Discard" leaves everything alone. "Save and close" sets the same flag without changing an offset, which is how the game knows not to nag. "Reset offsets" writes all three back to 0.
 
 ## How licensing and attribution are handled
 
-Every piece of content the game plays or draws has a row in `src/licensing/AssetManifest.ts`: the composition status, where the note data came from, how sound is produced for it, why it may be used, and whether attribution is required. Track rows are generated from the track metadata (`licenseNotes` becomes the rationale, `scoreSourceCredit` becomes the source note), and three fixed rows cover the favicon, the synthesized interface sounds and the interface typeface.
+Every piece of content the game plays or draws has a row in `src/licensing/AssetManifest.ts`: the composition status, where the note data came from, how sound is produced for it, why it may be used, and whether attribution is required. Track rows are generated from the track metadata (`licenseNotes` becomes the rationale, `scoreSourceCredit` becomes the source note), and three fixed rows cover the favicon, the interface and gameplay sounds, and the interface typeface.
 
-The manifest is the single source. `src/ui/CreditsPanel.ts` builds the in-game credits screen from it, and `ATTRIBUTION_AND_LICENSES.md` carries the same rows in the same order, with the per-track source notes broken out into their own section. The credits screen is generated and the markdown file is not, so when the two disagree the manifest is right. Composition credits and arrangement credits are kept in separate sections on purpose: the pieces are public domain, the note data and the sound are this project's own work, and those are different claims.
+Everything else reads that one list. `src/ui/CreditsPanel.ts` builds the in-game credits screen from it, and `ATTRIBUTION_AND_LICENSES.md` carries the same rows in the same order, with the per-track source notes broken out into their own section. The credits screen is generated and the markdown file is not, so when the two disagree the manifest is right. Composition credits and arrangement credits are kept in separate sections on purpose: the pieces are public domain, the note data and the sound are this project's own work, and those are different claims.
 
-No recording, no third-party MIDI file, no scanned edition and no external asset of any kind is bundled or fetched. All audio is synthesized in the browser at runtime by `src/audio/SynthInstruments.ts` and `src/audio/SoundEffects.ts`. The icon is hand-written SVG in `public/favicon.svg` and the interface is set in a system font stack, so no font file is shipped either. A composition being public domain says nothing about any particular recording of it; the project avoids the question by not using recordings.
+Nothing external is bundled or fetched: no recordings, no third-party MIDI files, no scanned editions. All audio is synthesized in the browser at runtime by `src/audio/SynthInstruments.ts` and `src/audio/SoundEffects.ts`. The icon is hand-written SVG in `public/favicon.svg` and the interface is set in a system font stack, so no font file is shipped either. A composition being public domain says nothing about any particular recording of it; the project avoids the question by not using recordings.
 
 `tests/manifest.test.ts` checks that every catalog track has a row, that the composition credit and the arrangement credit are different strings, and that the non-track rows come last. `tests/tracks.test.ts` pins the shared arrangement credit and requires every source credit to state that nothing external was used.
 
 ## How to add themes, instruments and difficulties
 
-**A theme** is a `Palette` in `src/render/Theme.ts`. There are two: `NEON_PALETTE` and `CONTRAST_PALETTE`, chosen by `palette(highContrast)`. Colours are literal strings picked once, because building an `rgba()` string per note would allocate on every frame; transparency at draw time comes from `ctx.globalAlpha`, and `palette.glow` set to false switches off every `shadowBlur` at once. A third look means a third `Palette`, a third judgment colour table beside `JUDGMENT_COLORS` in the same file, a third branch in `palette()`, `judgmentColor()` and `laneColor()`, and a third colour field on `LANE_IDENTITIES` in `src/app/Config.ts`. Lane identity is carried by shape first and colour second, so a new palette does not have to solve legibility on its own.
+A theme is a `Palette` in `src/render/Theme.ts`. There are two, `NEON_PALETTE` and `CONTRAST_PALETTE`, chosen by `palette(highContrast)`. Colours are literal strings picked once, because building an `rgba()` string per note would allocate on every frame; transparency at draw time comes from `ctx.globalAlpha`, and `palette.glow` set to false switches off every `shadowBlur` at once. A third look means a third `Palette`, a third judgment colour table beside `JUDGMENT_COLORS` in the same file, a third branch in `palette()`, `judgmentColor()` and `laneColor()`, and a third colour field on `LANE_IDENTITIES` in `src/app/Config.ts`. Lane identity is carried by shape first and colour second, so a new palette does not have to solve legibility on its own.
 
-**An instrument** is a member of the `InstrumentId` union in `src/charts/ChartTypes.ts`, which must also be added to `INSTRUMENT_IDS` (the validator checks parts against that array). Then give it a case in the voice builder in `src/audio/SynthInstruments.ts` and an entry in the per-instrument `TRIM` table, which is what keeps the mix balanced without a mastering stage. Percussion is a special case: parts use the `DRUM` constants as pitches and the synth maps those to noise and envelope voices.
+An instrument is a member of the `InstrumentId` union in `src/charts/ChartTypes.ts`, which must also be added to `INSTRUMENT_IDS` (the validator checks parts against that array). Then give it a case in the voice builder in `src/audio/SynthInstruments.ts` and an entry in the per-instrument `TRIM` table, which is what keeps the mix balanced without a mastering stage. Percussion is a special case: parts use the `DRUM` constants as pitches and the synth maps those to noise and envelope voices.
 
-**A difficulty** is a member of the `Difficulty` union and of `DIFFICULTIES` in `src/charts/ChartTypes.ts`, and needs four more entries to be complete: a label in `DIFFICULTY_LABELS`, a limits row in `DENSITY_LIMITS` (both in `src/app/Config.ts`), an id prefix in `DIFFICULTY_PREFIX` in `src/charts/ChartLoader.ts`, and a place in the hardcoded list in `availableDifficulties()` in `src/charts/TrackCatalog.ts`. The compiler refuses a chart filed under a key that disagrees with its own `difficulty` field, and refuses a difficulty outside the union, because either one would silently drop a chart or give it vacuous density limits. Which difficulties a track is *required* to ship is a separate decision, made in `validateTrack`.
+A difficulty is a member of the `Difficulty` union and of `DIFFICULTIES` in `src/charts/ChartTypes.ts`, and needs four more entries to be complete: a label in `DIFFICULTY_LABELS`, a limits row in `DENSITY_LIMITS` (both in `src/app/Config.ts`), an id prefix in `DIFFICULTY_PREFIX` in `src/charts/ChartLoader.ts`, and a place in the hardcoded list in `availableDifficulties()` in `src/charts/TrackCatalog.ts`. `compileTrack` throws on a chart filed under a key that disagrees with its own `difficulty` field, and on a difficulty outside the union, because either one would silently drop a chart or give it vacuous density limits. Which difficulties a track has to ship is a separate decision, made in `validateTrack`.
 
 ## Keyboard reference
 

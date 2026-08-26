@@ -553,7 +553,7 @@ export class App implements AppApi {
       judgmentOffsetMs: this.judgmentOffsetMs,
     });
     const practice = mode === "practice" ? new PracticeSystem(track, { rate: settings.practiceSpeed }) : null;
-    this.current = { track, difficulty, mode, game, practice, assisted: false, autoplay: false };
+    this.current = { track, difficulty, mode, game, practice, assisted: this.assistActive(), autoplay: false };
     this.mapper = mapperFor(track);
     this.autoNotes = [...game.chart.notes].sort((a, b) => a.timeMs - b.timeMs || a.lane - b.lane);
     this.bindGame(game);
@@ -655,7 +655,7 @@ export class App implements AppApi {
     this.clearAutoHold();
     this.transport.stop();
     session.game.reset();
-    session.assisted = session.autoplay;
+    session.assisted = session.autoplay || this.assistActive();
     this.seed = 1;
     this.renderer.clearEffects();
     this.resetFlashes();
@@ -704,7 +704,7 @@ export class App implements AppApi {
     });
     const practice = new PracticeSystem(track, { rate: settings.practiceSpeed });
     practice.setSection(section ?? track.sections[0] ?? null);
-    this.current = { track, difficulty, mode: "practice", game, practice, assisted: false, autoplay: false };
+    this.current = { track, difficulty, mode: "practice", game, practice, assisted: this.assistActive(), autoplay: false };
     this.mapper = mapperFor(track);
     this.autoNotes = [...game.chart.notes].sort((a, b) => a.timeMs - b.timeMs || a.lane - b.lane);
     this.bindGame(game);
@@ -1169,6 +1169,14 @@ export class App implements AppApi {
     this.clock.resume();
     this.transport.resume();
     this.hud.setCountIn(passStartMs, this.beatMs());
+  }
+
+  /**
+   * Debug assists that live on App rather than on the session, so they are
+   * still on when the next run starts and it has to count as assisted too.
+   */
+  private assistActive(): boolean {
+    return this.debugFlags.slowMotion;
   }
 
   /** Practice speed, halved again while the debug slow motion is on. */

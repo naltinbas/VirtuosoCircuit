@@ -427,8 +427,6 @@ export class HighwayRenderer {
 
   private drawHitWindows(ctx: CanvasRenderingContext2D, m: ViewMetrics, frame: RenderFrame): void {
     const { layout } = m;
-    const left = edgeXAtProgress(layout, 0, 0);
-    const right = edgeXAtProgress(layout, LANES.length, 0);
     // Widest window first, so the tighter ones read as brighter bands on top.
     for (let i = JUDGMENTS.length - 1; i >= 0; i--) {
       const judgment = JUDGMENTS[i];
@@ -438,7 +436,15 @@ export class HighwayRenderer {
       const yFar = yAtProgress(layout, progress);
       ctx.fillStyle = judgmentColor(judgment, frame.highContrast);
       ctx.globalAlpha = 0.09;
-      ctx.fillRect(left, yFar, right - left, yNear - yFar);
+      // The corridor narrows with distance, so each band follows the walls the
+      // notes it measures travel between.
+      ctx.beginPath();
+      ctx.moveTo(edgeXAtProgress(layout, 0, -progress), yNear);
+      ctx.lineTo(edgeXAtProgress(layout, LANES.length, -progress), yNear);
+      ctx.lineTo(edgeXAtProgress(layout, LANES.length, progress), yFar);
+      ctx.lineTo(edgeXAtProgress(layout, 0, progress), yFar);
+      ctx.closePath();
+      ctx.fill();
     }
     ctx.globalAlpha = 1;
   }

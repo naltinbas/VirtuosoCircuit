@@ -125,6 +125,9 @@ const manualNotes = join(
 const harmonyNotes = join(
   transposeNotes(flourishHigh.notes, -12),
   transposeNotes(flourishMid, -12),
+  // The third statement is the heaviest one, so it keeps its octave below the
+  // manual up to the resolution, where the pedal takes over.
+  melody(8, "A2/0.25 G2 A2/0.5 G2/0.25 F2 E2 D2 C#2"),
   melody(10.25, "A3+D4/1.75"),
   melody(12, "D3+A3/4 D3+A3/4"),
   melody(20, "D3+F3+A3/2 A2+C#3+G3 G2+Bb2+D3 A2+C#3+G3 Bb2+D3+F3 A2+C#3+G3"),

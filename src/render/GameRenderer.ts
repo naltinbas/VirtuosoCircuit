@@ -51,7 +51,7 @@ export interface RenderFrame {
   windows: JudgmentWindows;
 }
 
-/** Devicepixel ratio ceiling. Past this the fill rate costs more than it shows. */
+/** Device pixel ratio ceiling. Past this the fill rate costs more than it shows. */
 const MAX_DPR = 2;
 /** How much of the highway is left after a performance is interrupted. */
 const FAILED_DIM = 0.4;

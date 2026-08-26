@@ -43,7 +43,7 @@ export interface Palette {
   readonly glow: boolean;
 }
 
-export const NEON_PALETTE: Palette = {
+const NEON_PALETTE: Palette = {
   skyTop: "#04061a",
   skyBottom: THEME_COLORS.navy,
   ring: "#2a3a7a",
@@ -72,7 +72,7 @@ export const NEON_PALETTE: Palette = {
   glow: true,
 };
 
-export const CONTRAST_PALETTE: Palette = {
+const CONTRAST_PALETTE: Palette = {
   skyTop: "#000000",
   skyBottom: "#000000",
   ring: "#000000",
@@ -105,16 +105,12 @@ export function palette(highContrast: boolean): Palette {
   return highContrast ? CONTRAST_PALETTE : NEON_PALETTE;
 }
 
-export function laneIdentity(lane: Lane): LaneIdentity {
-  return LANE_IDENTITIES[lane];
-}
-
 export function laneColor(lane: Lane, highContrast: boolean): string {
   const identity = LANE_IDENTITIES[lane];
   return highContrast ? identity.highContrastColor : identity.color;
 }
 
-export const JUDGMENT_COLORS: Readonly<Record<Judgment, string>> = {
+const JUDGMENT_COLORS: Readonly<Record<Judgment, string>> = {
   radiant: "#ffe6a3",
   precise: "#7ff0e2",
   good: "#b9a6ff",
@@ -122,7 +118,7 @@ export const JUDGMENT_COLORS: Readonly<Record<Judgment, string>> = {
   miss: "#ff7a6b",
 };
 
-export const JUDGMENT_COLORS_CONTRAST: Readonly<Record<Judgment, string>> = {
+const JUDGMENT_COLORS_CONTRAST: Readonly<Record<Judgment, string>> = {
   radiant: "#ffffff",
   precise: "#ffffff",
   good: "#e4e8ff",

@@ -12,7 +12,7 @@ import type { NoteRuntime, NoteState } from "./NoteScheduler";
 
 const TRILL_PREFIX = "trill-";
 
-export function isTrillPhrase(phraseId: string): boolean {
+function isTrillPhrase(phraseId: string): boolean {
   return phraseId.startsWith(TRILL_PREFIX);
 }
 

@@ -1,6 +1,6 @@
 # Virtuoso Circuit
 
-A five-lane keyboard rhythm game that runs in the browser. You are the signal conductor, and the hall you are working in has been dark for a long time; every performance you finish restores power to another wing of a neon conservatory, which is what opens the next piece in the catalog. Notes fall down a corridor toward the Resonance Gate, you press the lane key as each one crosses, and the score, the Resonance Chain and the Aura Meter follow from how close you were. Ten pieces, all public-domain classical, all arranged as note data in this repository and synthesized by the browser while you play. TypeScript, Vite 6, Canvas 2D, Web Audio, vitest. No runtime dependencies and no asset files: nothing is fetched, decoded or bundled.
+A five-lane keyboard rhythm game that runs in the browser. You are the signal conductor, and the hall you are working in has been dark for a long time; every performance you finish restores power to another wing of a neon conservatory, which is what opens the next piece in the catalog. Notes fall down a corridor toward the Resonance Gate, you press the lane key as each one crosses, and the score, the Resonance Chain and the Aura Meter follow from how close you were. Ten pieces, all public-domain classical, all arranged as note data in this repository and synthesized by the browser while you play. TypeScript, Vite 6, Canvas 2D, Web Audio, vitest. No runtime dependencies and no media files: the only asset in the build is a hand-written SVG favicon, and no sound, image or font is fetched or decoded.
 
 ## Tracks
 
@@ -19,7 +19,7 @@ A five-lane keyboard rhythm game that runs in the browser. You are the signal co
 
 The table is in catalog order, which is the order the wings open in. The first three are unlocked from the start; every later track names the one before it in `metadata.unlockAfter` and stays sealed until that one is completed in a performance run. Each track carries a novice, an apprentice and a virtuoso chart; tracks 7 to 10 also carry a maestro chart. The headline difficulty in the last column is `metadata.difficulty`, the level the arrangement was pitched at. It is a label and not a restriction: the track select card ignores it and lists every difficulty the track actually ships.
 
-The Minuet in G is credited to Christian Petzold. It sits in the 1725 Notebook for Anna Magdalena Bach and was catalogued as BWV Anh. 114 under Bach's name for about two centuries, which is why the metadata carries an `attributionNote` and the credits screen prints it.
+The Minuet in G is credited to Christian Petzold. It sits in the 1725 Notebook for Anna Magdalena Bach and was credited to Bach for about two centuries, which is how it ended up with a BWV Anhang number, and why the metadata carries an `attributionNote` that the credits screen prints.
 
 ## Install, run, build
 
@@ -34,7 +34,7 @@ npm run typecheck  # tsc --noEmit on its own
 
 Built and tested on Node 22. `typescript`, `vite` and `vitest` are the only dependencies, all of them dev dependencies; there is no `dependencies` field and there is not meant to be one.
 
-`vite.config.ts` sets `base: "./"`, so `dist/` works from a subdirectory or from `file://` without a rewrite. The package version is injected as `__APP_VERSION__` and shown at the foot of the main menu.
+`vite.config.ts` sets `base: "./"`, so `dist/` works from any subdirectory of a static host without rewriting the paths. It still has to be served: the built page loads a module script, and browsers refuse those over `file://`. The package version is injected as `__APP_VERSION__` and shown at the foot of the main menu.
 
 Debug tooling (the F3 overlay, the chart editor, `window.vc`) is on whenever `import.meta.env.DEV` is true, and can be turned on in a production build with `?debug=true`. The switch is `DEBUG_ENABLED` in `src/app/Config.ts`.
 
@@ -63,7 +63,7 @@ horizon = songNow + AUDIO.lookaheadMs * rate
 
 Pausing stops the interval as well as the voices. A tick against a paused clock would measure the horizon from a stale anchor and drop the whole lookahead as late.
 
-Every seek, resume or rate change goes through `resync()`, which silences the voices, moves the note cursor and the metronome cursor to the clock position with a binary search, and then re-triggers what should still be sounding. That last part is `retriggerSustained()`: it scans back `AUDIO.retriggerScanMs` (12 s), and any note with at least `AUDIO.retriggerMinRemainingMs` (150 ms) of real time left is started again part way through its envelope, using the synth's `offsetSec` parameter. Without it a long organ chord vanishes the moment you scrub the practice playhead into the middle of it.
+Every seek, resume or rate change goes through `resync()`, which silences the voices, moves the note cursor and the metronome cursor to the clock position with a binary search, and then re-triggers what should still be sounding. That last part is `retriggerSustained()`: it scans back `AUDIO.retriggerScanMs` (12 s), and any note with at least `AUDIO.retriggerMinRemainingMs` (150 ms) of song time left is started again part way through its envelope, using the synth's `offsetSec` parameter. Without it a long organ chord vanishes the moment you scrub the practice playhead into the middle of it.
 
 The count-in clicks are booked at absolute audio times through `SoundEffects.playAt()`, which returns a cancel. `App.seekTo()` cancels them before re-anchoring the clock, because after a re-anchor those absolute times point at song positions that no longer mean anything.
 
@@ -105,7 +105,7 @@ Both scale with `rate`. The offsets are wall-clock quantities: the sound really 
 
 Judging a press is a per-lane search, in `src/gameplay/NoteScheduler.ts`. Each lane keeps a cursor, which is a hint and nothing more: `candidate()` first walks the cursor past notes that have left the pending state, then scans forward for the **earliest still-pending note in that lane** whose time is within the miss window of the press, and stops as soon as it passes `t + missWindow`. Because the scan never assumes notes are consumed in order, a seek, a practice loop or a key event that arrives out of order cannot desynchronise it. A press that matches nothing is ignored entirely rather than punished.
 
-`src/gameplay/NoteJudge.ts` turns the signed delta (positive is late) into a judgment, and nothing else in `src/gameplay/` compares against the windows directly. From `src/app/Config.ts`, symmetric in both directions:
+`src/gameplay/NoteJudge.ts` turns the signed delta (positive is late) into a judgment, and it is the only place a delta becomes one. The results histogram reads the faint window for its range, and nothing else in `src/gameplay/` touches the table. From `src/app/Config.ts`, symmetric in both directions:
 
 | Judgment | Window | Score | Accuracy weight | Aura |
 | --- | --- | --- | --- | --- |
@@ -211,7 +211,7 @@ No recording, no third-party MIDI file, no scanned edition and no external asset
 
 ## How to add themes, instruments and difficulties
 
-**A theme** is a `Palette` in `src/render/Theme.ts`. There are two: `NEON_PALETTE` and `CONTRAST_PALETTE`, chosen by `palette(highContrast)`. Colours are literal strings picked once, because building an `rgba()` string per note would allocate on every frame; transparency at draw time comes from `ctx.globalAlpha`, and `palette.glow` set to false switches off every `shadowBlur` at once. A third look means a third `Palette`, a way to select it, and matching entries in `JUDGMENT_COLORS` and in the `color` / `highContrastColor` fields of `LANE_IDENTITIES` in `src/app/Config.ts`. Lane identity is carried by shape first and colour second, so a new palette does not have to solve legibility on its own.
+**A theme** is a `Palette` in `src/render/Theme.ts`. There are two: `NEON_PALETTE` and `CONTRAST_PALETTE`, chosen by `palette(highContrast)`. Colours are literal strings picked once, because building an `rgba()` string per note would allocate on every frame; transparency at draw time comes from `ctx.globalAlpha`, and `palette.glow` set to false switches off every `shadowBlur` at once. A third look means a third `Palette`, a third judgment colour table beside `JUDGMENT_COLORS` in the same file, a third branch in `palette()`, `judgmentColor()` and `laneColor()`, and a third colour field on `LANE_IDENTITIES` in `src/app/Config.ts`. Lane identity is carried by shape first and colour second, so a new palette does not have to solve legibility on its own.
 
 **An instrument** is a member of the `InstrumentId` union in `src/charts/ChartTypes.ts`, which must also be added to `INSTRUMENT_IDS` (the validator checks parts against that array). Then give it a case in the voice builder in `src/audio/SynthInstruments.ts` and an entry in the per-instrument `TRIM` table, which is what keeps the mix balanced without a mastering stage. Percussion is a special case: parts use the `DRUM` constants as pitches and the synth maps those to noise and envelope voices.
 
@@ -255,7 +255,7 @@ During a run:
 
 In the menus: arrow keys and Tab move focus, Enter or Space activates, Escape goes back or closes the dialog on top. Sliders and text fields keep the arrow keys that change their own value.
 
-`RESERVED_KEYS` in `src/app/Config.ts` lists what can never be bound to a lane: Escape, F1, F3, F5, F11, F12, Tab, R, P, Space and the modifier keys. F5, F11 and F12 always keep their browser behaviour, so reload, fullscreen and dev tools work even mid-run.
+`RESERVED_KEYS` in `src/app/Config.ts` lists what can never be bound to a lane: Escape, F1, F3, F5, F11, F12, Tab, R, P, Space and the Control, Alt and Meta keys. Right shift is not on the list, because it is a fixed alternate for lane 4. F5, F11 and F12 always keep their browser behaviour, so reload, fullscreen and dev tools work even mid-run.
 
 ## Screenshots
 

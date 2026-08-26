@@ -84,7 +84,7 @@ Every piece played in this game is a public-domain composition. The composers, i
 
 Four of these carry an attribution caveat, and the game prints it on the track card and in the credits:
 
-- **Minuet in G major, BWV Anh. 114** is credited here to **Christian Petzold**, not to Bach. It sits in the 1725 Notebook for Anna Magdalena Bach, which is a household collection rather than a volume of Bach's own compositions, and it kept a BWV Anhang number and Bach's name for roughly two centuries. It is now attributed to Petzold. The BWV number is printed as well, because that is what most people will search for.
+- **Minuet in G major, BWV Anh. 114** is credited here to **Christian Petzold**, not to Bach. It sits in the 1725 Notebook for Anna Magdalena Bach, which is a household collection rather than a volume of Bach's own compositions, and it carried Bach's name for roughly two centuries, which is how it ended up in the BWV Anhang. It is now attributed to Petzold. The BWV number is printed as well, because that is what most people will search for.
 - **Toccata and Fugue in D minor** is published as Bach's and catalogued as BWV 565, though some scholars question the attribution.
 - **Für Elise** was published in 1867, forty years after Beethoven's death, from a manuscript that has since been lost. Who the dedication names is still argued over.
 - **Cello Suite No. 1**: no autograph of the cello suites survives. The piece is known from early manuscript copies, the best known of them in Anna Magdalena Bach's hand.

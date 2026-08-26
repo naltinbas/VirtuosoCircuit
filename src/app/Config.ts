@@ -1,9 +1,10 @@
 import type { Difficulty, Lane } from "../charts/ChartTypes";
 
-// Timing windows in ms. A press is graded against the nearest unjudged note in
-// its lane; |delta| within `faint` counts as a hit, within `miss` counts as a
-// consumed miss (too early or too late), beyond that the press is ignored.
-// A note with no press is auto-missed once song time passes timeMs + miss.
+// Timing windows in ms. A press is graded against the earliest unjudged note
+// in its lane that is within the miss window; |delta| within `faint` counts as
+// a hit, within `miss` counts as a consumed miss (too early or too late),
+// beyond that the press is ignored. A note with no press is auto-missed once
+// song time passes timeMs + miss. All windows are symmetric.
 export const JUDGMENT_WINDOWS_MS = {
   radiant: 35,
   precise: 75,
@@ -11,6 +12,8 @@ export const JUDGMENT_WINDOWS_MS = {
   faint: 165,
   miss: 200,
 } as const;
+
+export type JudgmentWindows = { [K in keyof typeof JUDGMENT_WINDOWS_MS]: number };
 
 export type Judgment = "radiant" | "precise" | "good" | "faint" | "miss";
 export const JUDGMENTS: readonly Judgment[] = ["radiant", "precise", "good", "faint", "miss"];
@@ -31,10 +34,12 @@ export const SCORE_CONFIG = {
   miss: 0,
   holdTick: 35,
   holdTickIntervalMs: 100,
+  /** Releasing this close to the end of a hold still counts as completing it. */
+  holdReleaseGraceMs: 100,
   chordCompletionBonus: 250,
-  /** Chord bonus only if every lane of the chord was hit within this many ms of each other. */
-  chordSyncWindowMs: 80,
   phraseCompletionBonus: 750,
+  /** Paid instead of the phrase bonus for phrases whose id starts with "trill-". */
+  trillCompletionBonus: 300,
   maxMultiplier: 8,
   multiplierStepEvery: 10,
   focusSurgeMultiplier: 2,
@@ -96,7 +101,7 @@ export const GUIDED_CALIBRATION = {
 export const KEYMAP_PRESETS = {
   default: ["KeyA", "KeyS", "KeyD", "KeyJ", "KeyK"],
   compactLeft: ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG"],
-  splitHands: ["KeyA", "KeyS", "KeyD", "KeyJ", "KeyK"],
+  splitHands: ["KeyS", "KeyD", "KeyF", "KeyJ", "KeyK"],
   arrows: ["ArrowLeft", "ArrowDown", "ArrowUp", "ArrowRight", "Enter"],
 } as const;
 
@@ -181,6 +186,26 @@ export const HIGHWAY = {
   outroMs: 2500,
   /** Song time at which the practice loop re-enters relative to the loop start. */
   practicePrerollMs: 1500,
+  /** Dwell on the "performance complete" / "interrupted" banner before the results. */
+  resultsDelayMs: 1800,
+  /** How far before a freeze point the debug freezeAt starts stepping so judgments are on screen. */
+  freezeWarmupMs: 1500,
+  /** How early the practice ghost guide shows the upcoming key. */
+  ghostLeadMs: 300,
+} as const;
+
+/** Highway geometry as fractions of the canvas (px values are CSS pixels). */
+export const LAYOUT = {
+  gateY: 0.82,
+  spawnY: 0.06,
+  bottomWidth: 0.62,
+  topWidthRatio: 0.38,
+  receptorSize: 0.62,
+  noteScaleAtSpawn: 0.38,
+  popupRisePx: 48,
+  popupLifeMs: 700,
+  burstLifeMs: 450,
+  keyLabelOffsetPx: 28,
 } as const;
 
 export const PRACTICE_SPEEDS: readonly number[] = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
@@ -243,12 +268,18 @@ export const CHART_ALIGNMENT_TOLERANCE_MS = 25;
 export const TRACK_LENGTH_MS = { min: 55_000, max: 125_000 } as const;
 
 export const AUDIO = {
-  /** How far ahead the transport schedules music, in ms of song time. */
+  /** How far ahead the transport schedules, in ms of audio (wall) time. The song-time horizon is lookaheadMs * rate. */
   lookaheadMs: 200,
   /** Scheduler tick interval in ms. */
   schedulerIntervalMs: 25,
+  /** A note whose scheduled audio time is already this far in the past is dropped instead of started late. */
+  lateNoteDropMs: 50,
   /** Cap on frame delta used by visual effects after a tab switch. */
   maxFrameDeltaMs: 100,
+  /** How long unlock() waits for the AudioContext to run before falling back to silent mode. */
+  unlockTimeoutMs: 500,
+  /** Polyphony cap; the oldest voice is stolen beyond it. */
+  maxVoices: 48,
 } as const;
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
@@ -259,3 +290,8 @@ export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
 };
 
 export const STORAGE_PREFIX = "virtuoso-circuit:";
+
+/** Debug tooling (F3 overlay, chart editor, window.vc) is on in dev builds or with ?debug=true. */
+export const DEBUG_ENABLED: boolean =
+  (typeof import.meta !== "undefined" && Boolean(import.meta.env?.DEV)) ||
+  (typeof location !== "undefined" && new URLSearchParams(location.search).get("debug") === "true");

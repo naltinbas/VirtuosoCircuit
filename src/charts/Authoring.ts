@@ -9,8 +9,11 @@
 // Chart:   lanes(0, "0/1 1 2 [0,2]/1 1h/2 &3h/2 r/1 4!/0.5", "phrase-a")
 //   token = laneSpec[h][!][/durationBeats]   laneSpec = digit or [d,d,...]
 //   "h" makes a hold whose length is the token duration, "!" marks an accent,
-//   "&" in front of a token places it on the same beat as the previous token,
+//   "&" in front of a token places it on the same beat as the previous token
+//   without advancing the beat (its duration still becomes the sticky one),
 //   "r" is a rest. The beat advances by the token's duration.
+//
+// Malformed tokens throw. Nothing is dropped silently.
 
 import {
   DRUM,
@@ -25,6 +28,13 @@ import {
 } from "./ChartTypes";
 
 const PITCH_CLASS: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+
+const NUMBER = /^\d+(\.\d+)?$/;
+
+function strictNumber(text: string, what: string, token: string): number {
+  if (!NUMBER.test(text)) throw new Error(`Bad ${what} in "${token}"`);
+  return Number(text);
+}
 
 const DRUM_NAMES: Record<string, number> = {
   k: DRUM.kick,
@@ -83,18 +93,19 @@ export function melody(startBeat: number, text: string, defaultVelocity = 0.8): 
     let dur = duration;
     const slash = body.lastIndexOf("/");
     if (slash >= 0) {
-      dur = parseFloat(body.slice(slash + 1));
+      dur = strictNumber(body.slice(slash + 1), "duration", token);
       if (!(dur > 0)) throw new Error(`Bad duration in "${token}"`);
       body = body.slice(0, slash);
     }
     const at = body.indexOf("@");
     let vel = velocity;
     if (at >= 0) {
-      vel = parseFloat(body.slice(at + 1));
+      vel = strictNumber(body.slice(at + 1), "velocity", token);
       if (!(vel >= 0 && vel <= 1)) throw new Error(`Bad velocity in "${token}"`);
       body = body.slice(0, at);
       velocity = vel;
     }
+    if (body.length === 0) throw new Error(`Empty pitch in "${token}"`);
     duration = dur;
     if (body === "r") {
       beat += dur;
@@ -160,14 +171,16 @@ export function lastBeat(notes: readonly ArrangementNote[]): number {
 // Chart notation
 // ---------------------------------------------------------------------------
 
+const LANE_SPEC = /^([0-4]|\[[0-4](,[0-4])*\])$/;
+
 function parseLaneSpec(spec: string, token: string): Lane[] {
+  if (!LANE_SPEC.test(spec)) throw new Error(`Bad lane spec in "${token}"`);
   const raw = spec.startsWith("[") ? spec.slice(1, -1).split(",") : [spec];
-  const lanes = raw.map((s) => {
-    const n = parseInt(s.trim(), 10);
+  return raw.map((s) => {
+    const n = Number(s);
     if (!isLane(n)) throw new Error(`Bad lane in "${token}"`);
     return n;
   });
-  return lanes;
 }
 
 /**
@@ -190,12 +203,13 @@ export function lanes(startBeat: number, text: string, phraseId?: string): BeatE
     let dur = duration;
     const slash = body.lastIndexOf("/");
     if (slash >= 0) {
-      dur = parseFloat(body.slice(slash + 1));
+      dur = strictNumber(body.slice(slash + 1), "duration", token);
       if (!(dur > 0)) throw new Error(`Bad duration in "${token}"`);
       body = body.slice(0, slash);
     }
     duration = dur;
     if (body === "r") {
+      if (sameBeat) throw new Error(`A rest cannot follow "&" in "${token}"`);
       beat += dur;
       continue;
     }
@@ -227,8 +241,24 @@ export function phrase(id: string, startBeat: number, text: string): BeatEvent[]
   return lanes(startBeat, text, id);
 }
 
-export function shiftEvents(events: readonly BeatEvent[], beats: number): BeatEvent[] {
-  return events.map((e) => ({ ...e, beat: e.beat + beats }));
+/**
+ * A trill phrase: alternating single notes that pay the trill bonus. The
+ * validator insists that consecutive events change lane.
+ */
+export function trill(id: string, startBeat: number, text: string): BeatEvent[] {
+  return lanes(startBeat, text, `trill-${id}`);
+}
+
+/**
+ * Move events later by `beats`. Pass `phraseSuffix` when repeating a section
+ * so its phrases stay separate from the original ones.
+ */
+export function shiftEvents(events: readonly BeatEvent[], beats: number, phraseSuffix?: string): BeatEvent[] {
+  return events.map((e) => {
+    const out: BeatEvent = { ...e, beat: e.beat + beats };
+    if (phraseSuffix !== undefined && e.phraseId) out.phraseId = `${e.phraseId}${phraseSuffix}`;
+    return out;
+  });
 }
 
 /** Merge event lists into one chart, sorted by beat then lane. */

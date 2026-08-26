@@ -15,7 +15,11 @@ export type GameState =
   | "RESULTS"
   | "CHART_EDITOR";
 
-/** States in which lane key presses are judged. */
-export const GAMEPLAY_STATES: ReadonlySet<GameState> = new Set(["PLAYING", "PRACTICE"]);
+/**
+ * States in which lane key presses reach the game. The countdown is included
+ * because the first notes are already on the highway and may legally be hit
+ * up to 200 ms early.
+ */
+export const GAMEPLAY_STATES: ReadonlySet<GameState> = new Set(["COUNTDOWN", "PLAYING", "PRACTICE"]);
 
 export type PlayMode = "performance" | "practice" | "free";

@@ -21,7 +21,11 @@ export function formatScore(v: number): string {
   return Math.round(v).toLocaleString("en-US");
 }
 
-/** performance.now() with a fallback for environments that lack it. */
-export function nowMs(): number {
+/**
+ * performance.now() with a fallback for environments that lack it. Only
+ * AudioEngine and the renderer's idle backdrop may call this; everything else
+ * takes times as parameters so the audio clock stays authoritative.
+ */
+export function perfNowMs(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }

@@ -64,7 +64,8 @@ export function validateChart(
   const onsets = new Float64Array(track.music.length);
   for (let i = 0; i < track.music.length; i++) onsets[i] = track.music[i].timeMs;
 
-  const alignedToMusic = (t: number): boolean => {
+  /** Arrangement notes starting within the alignment tolerance of t. */
+  const onsetsNear = (t: number): number => {
     let lo = 0;
     let hi = onsets.length;
     while (lo < hi) {
@@ -72,7 +73,9 @@ export function validateChart(
       if (onsets[mid] < t - CHART_ALIGNMENT_TOLERANCE_MS) lo = mid + 1;
       else hi = mid;
     }
-    return lo < onsets.length && onsets[lo] <= t + CHART_ALIGNMENT_TOLERANCE_MS;
+    let count = 0;
+    while (lo + count < onsets.length && onsets[lo + count] <= t + CHART_ALIGNMENT_TOLERANCE_MS) count++;
+    return count;
   };
 
   for (let i = 0; i < events.length; i++) {
@@ -106,11 +109,22 @@ export function validateChart(
       if (e.lanes.length !== 1) push("error", "single-lanes", `single ${e.id} must use exactly one lane`, e.id);
       if (e.durationMs !== 0) push("error", "single-duration", `single ${e.id} has a duration`, e.id);
     }
-    if (!alignedToMusic(e.timeMs)) {
+    const onsetCount = onsetsNear(e.timeMs);
+    if (onsetCount === 0) {
       push(
         "error",
         "unaligned",
         `event ${e.id} at beat ${e.beat} (${e.timeMs.toFixed(0)}ms) does not coincide with any arrangement note`,
+        e.id,
+      );
+    } else if (e.type === "chord" && onsetCount < e.lanes.length) {
+      // A chord asks the player for one key per part striking. Over fewer
+      // onsets than that it is a chord the arrangement does not play, usually a
+      // pattern reused over a texture that strikes less often.
+      push(
+        "warning",
+        "thin-chord",
+        `chord ${e.id} asks for ${e.lanes.length} keys where the arrangement starts ${onsetCount} note${onsetCount === 1 ? "" : "s"}`,
         e.id,
       );
     }

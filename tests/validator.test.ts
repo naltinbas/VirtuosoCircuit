@@ -94,6 +94,16 @@ describe("validateChart", () => {
     );
     expect(codes(validateChart(single, track))).toContain("single-duration");
   });
+  it("warns when a chord asks for more keys than the arrangement strikes", () => {
+    // The fixture bass strikes every two beats, the melody every beat, so beat
+    // 1 has one onset and beat 2 has two.
+    const thin = compileChart({ difficulty: "novice", events: [{ beat: 1, lanes: [0, 2] }] }, mapper);
+    expect(codes(validateChart(thin, track), "warning")).toContain("thin-chord");
+    const full = compileChart({ difficulty: "novice", events: [{ beat: 2, lanes: [0, 2] }] }, mapper);
+    expect(codes(validateChart(full, track), "warning")).not.toContain("thin-chord");
+    const single = compileChart({ difficulty: "novice", events: [{ beat: 1, lanes: [0] }] }, mapper);
+    expect(codes(validateChart(single, track), "warning")).not.toContain("thin-chord");
+  });
   it("warns on split chords and tiny phrases", () => {
     const c = compileChart({ difficulty: "novice", events: [{ beat: 0, lanes: [0], phraseId: "x" }, { beat: 0, lanes: [3] }] }, mapper);
     const issues = validateChart(c, track);

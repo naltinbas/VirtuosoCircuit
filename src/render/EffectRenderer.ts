@@ -191,6 +191,12 @@ export class EffectRenderer {
       if (this.popups.length > 0 || this.sparks.length > 0) this.clear();
       return;
     }
+    // Reduced motion skips particles, a burst already in flight included, so
+    // nothing keeps travelling after the player asks the screen to settle.
+    if (frame.reducedMotion && this.sparks.length > 0) {
+      for (const spark of this.sparks) this.sparkPool.release(spark);
+      this.sparks.length = 0;
+    }
 
     for (let i = this.popups.length - 1; i >= 0; i--) {
       const popup = this.popups[i];

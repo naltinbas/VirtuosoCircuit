@@ -55,6 +55,18 @@ describe("hit bursts", () => {
     expect(effects.particleCount).toBe(0);
   });
 
+  it("drops a burst in flight when reduced motion comes on", () => {
+    const effects = burstAt(1000);
+    effects.update(frameAt(1050));
+    expect(effects.particleCount).toBe(SCENE.burstParticles);
+    // Particles are skipped under reduced motion, so the ones already thrown
+    // leave with the setting rather than flying on for another half second.
+    effects.update({ ...frameAt(1100), reducedMotion: true });
+    expect(effects.particleCount).toBe(0);
+    effects.addJudgment(1, "radiant", 0, 1100, false);
+    expect(effects.particleCount).toBe(0);
+  });
+
   it("culls a burst the run has already left behind", () => {
     const effects = burstAt(1000);
     // What forceComplete and a forward seek leave: sparks judged a whole song

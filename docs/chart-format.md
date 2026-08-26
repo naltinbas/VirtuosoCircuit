@@ -1,6 +1,6 @@
 # Chart format
 
-Tracks are authored in beats and compiled to milliseconds once, when the track is loaded. Nothing that runs during a performance knows what a beat is, apart from the beat grid and the debug readout. This document describes both halves: the beat-shaped types you write, and the millisecond-shaped types the game plays.
+Tracks are authored in beats and compiled to milliseconds once, when the track is loaded. After that, judging, scheduling and note positions are all in milliseconds. The beats that survive into a performance are the beat grid the metronome clicks on and the beat pulse the notes are drawn with. The debug overlay converts the play head back to a beat and a measure for its readout.
 
 The types are in `src/charts/ChartTypes.ts`, the notation in `src/charts/Authoring.ts`, the tempo maths in `src/charts/BeatMapper.ts`, the compiler in `src/charts/ChartLoader.ts` and the rules in `src/charts/ChartValidator.ts`.
 
@@ -91,7 +91,7 @@ tempoMap: [
 interface SectionSource { name: string; startBeat: number; endBeat: number }
 ```
 
-Compiled to `Section`, which keeps the beats and adds `startMs` and `endMs`. Sections are the practice studio's checkpoints and its loop presets, and the pause menu offers "practice this section" from the one you were in.
+`compileTrack()` turns each one into a `Section` that keeps the beats and adds `startMs` and `endMs`. Sections are the practice studio's checkpoints and its loop presets, and the pause menu offers "practice this section" from the one you were in.
 
 They must be non-empty (`endBeat > startBeat`), inside the track, and non-overlapping in order. The first should start at beat 0; `tests/tracks.test.ts` requires it and requires at least two sections.
 
@@ -135,7 +135,7 @@ interface ScheduledNote {
 
 `metadata.durationMs` is the end of the last arrangement note plus a 400 ms tail (`MUSIC_TAIL_MS`), rounded up, so the final chord has room to ring. A performance counts as complete `HIGHWAY.outroMs` (2500 ms) after that.
 
-The arrangement is not just the soundtrack. Every chart event has to line up with a note in it, so writing the arrangement first and the charts against it is the order that works.
+The arrangement is also the grid the charts are checked against. Every chart event has to coincide with a note in it, so write the arrangement first and the charts against it.
 
 ## BeatEvent and BeatChart
 
@@ -193,11 +193,11 @@ An event is what the author wrote; a note is what gets judged. A three-lane chor
 
 An authored duration survives compilation whatever the event turned out to be. Only a hold is allowed to keep one, and the validator can only say so if the number is still there to look at.
 
-`CompiledChart` also carries `ChartStats`: event and note counts, how many of each type, the phrase count, `peakNotesPerSecond`, and the first and last note times. The library cards and the chart editor read those.
+`CompiledChart` also carries `ChartStats`: event and note counts, how many of each type, the phrase count, `peakNotesPerSecond`, and the first and last note times. The chart editor prints `peakNotesPerSecond` under its event table, and `tests/tracks.test.ts` reads `noteCount` to check that each difficulty has more notes than the one below it.
 
 ## The notation
 
-`src/charts/Authoring.ts` exists so an arrangement reads as music instead of as a wall of object literals. Every function is pure and every malformed token throws. Nothing is dropped silently.
+`src/charts/Authoring.ts` exists so an arrangement reads as music instead of as a wall of object literals. Every function is pure, and a malformed token throws rather than being skipped.
 
 ### Music
 
@@ -211,13 +211,13 @@ One token per note:
 pitch[+pitch...][@velocity][/durationBeats]
 ```
 
-- **pitch**: a letter `A` to `G`, an optional `#`, `##`, `b` or `bb`, then an octave number. `C4` is middle C and MIDI 60. Negative octaves are allowed (`C-1` is 0).
-- **`+`** stacks pitches into a chord at the same beat with the same duration.
-- **`@velocity`** is 0 to 1 and is sticky: it applies until another token changes it.
-- **`/durationBeats`** is also sticky, starting at 1.
-- **`r`** is a rest: it advances the beat and writes nothing.
-- **`|`** is ignored, so you can write barlines where they help.
-- In a percussion part, use a drum name instead of a pitch: `k s h oh t cr rd cl`.
+- `pitch` is a letter `A` to `G`, an optional `#`, `##`, `b` or `bb`, then an octave number. `C4` is middle C and MIDI 60. Negative octaves are allowed (`C-1` is 0).
+- `+` stacks pitches into a chord at the same beat with the same duration.
+- `@velocity` is 0 to 1 and sticky: it applies until another token changes it.
+- `/durationBeats` is also sticky, starting at 1.
+- `r` is a rest. It advances the beat and writes nothing.
+- `|` is ignored, so you can write barlines where they help.
+- In a percussion part, write a drum name instead of a pitch: `k s h oh t cr rd cl`.
 
 ```ts
 melody(0, "E4/1 E4 F4 G4 | G4 F4 E4 D4 | C4+E4/2 r/1 G3@0.5/1")
@@ -225,7 +225,7 @@ melody(0, "E4/1 E4 F4 G4 | G4 F4 E4 D4 | C4+E4/2 r/1 G3@0.5/1")
 
 reads as four quarter notes, four more, a two-beat C major third, a one-beat rest, and a quieter G3.
 
-Helpers around it: `join(...)` merges and sorts several results, `shiftNotes(notes, beats)` moves a passage, `transposeNotes(notes, semitones)` moves it in pitch, `repeatNotes(notes, times, lengthBeats)` lays down copies at a fixed spacing, `lastBeat(notes)` reports where a passage ends, and `part(id, instrument, notes, opts)` builds an `ArrangementPart` with the notes sorted.
+Helpers around it: `join(...)` merges and sorts several results, `shiftNotes(notes, beats)` moves a passage later, `transposeNotes(notes, semitones)` moves it in pitch, and `repeatNotes(notes, times, lengthBeats)` lays down copies at a fixed spacing. `lastBeat(notes)` reports where a passage ends. `part(id, instrument, notes, opts)` builds an `ArrangementPart` with the notes sorted.
 
 `pitchToMidi("F#3")` and `midiToPitch(54)` are exported too, for tooling.
 
@@ -241,12 +241,12 @@ One token per chart event:
 [&]laneSpec[h][!][/durationBeats]
 ```
 
-- **laneSpec** is a single digit `0` to `4`, or a bracketed list like `[0,2,4]` for a chord.
-- **`h`** makes it a hold lasting the token's duration. Chords cannot be held; the parser throws and tells you to write separate `&` hold tokens instead.
-- **`!`** marks an accent.
-- **`/durationBeats`** is sticky, starting at 1, exactly as in `melody`.
-- **`&`** in front of a token places it on the same beat as the previous token without advancing the beat. Its duration still becomes the sticky one. This is how two holds start together in different lanes.
-- **`r`** is a rest. A rest cannot follow `&`.
+- `laneSpec` is a single digit `0` to `4`, or a bracketed list like `[0,2,4]` for a chord.
+- `h` makes it a hold lasting the token's duration. Chords cannot be held; the parser throws and tells you to write separate `&` hold tokens instead.
+- `!` marks an accent.
+- `/durationBeats` is sticky, starting at 1, exactly as in `melody`.
+- `&` in front of a token places it on the same beat as the previous token without advancing the beat. Its duration still becomes the sticky one. This is how two holds start together in different lanes.
+- `r` is a rest. A rest cannot follow `&`.
 
 ```ts
 lanes(0, "0/1 1 2 [0,2]/1 1h/2 &3h/2 r/1 4!/0.5", "phrase-a")
@@ -327,11 +327,11 @@ const def: TrackDefinition = {
 export default def;
 ```
 
-Things worth noticing in it, because they are the constraints that bite:
+What it has to get right:
 
 - Every chart beat is a beat where the melody or the bass actually plays. The melody has onsets at beats 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12 and 14 of each block; the bass adds 0, 4, 8 and 12. Nothing in any chart falls anywhere else.
 - Every chord sits on a beat where the melody and the bass strike together: 0, 4 and 12 at apprentice, and 8 as well at virtuoso. A chord over fewer onsets than it has lanes gets a `thin-chord` warning.
-- The virtuoso hold in lane 2 runs from beat 14 to beat 16 of its block, and the next block's lane 2 note is at beat 18. Same-lane spacing is measured from the **end** of a hold, so ending a hold on the beat where the same lane restarts is an error, not a tight squeeze.
+- The virtuoso hold in lane 2 runs from beat 14 to beat 16 of its block, and the next block's lane 2 note is at beat 18. Same-lane spacing is measured from the end of a hold, so a hold that ends on the beat where the same lane restarts leaves a zero gap and fails `lane-gap`.
 - Each repeat gets its own phrase suffix. Without it the six copies are one phrase spanning the whole track, which pays only if every note in it is clean. The validator stays quiet either way: consecutive events are never more than two beats apart, so `phrase-split` has nothing to catch.
 
 Check it without starting the game:
@@ -418,7 +418,7 @@ Errors mean the chart is wrong and `tests/tracks.test.ts` fails. Warnings are pr
 | `tiny-phrase` | warning | A phrase with one event, which is a bonus for nothing. |
 | `phrase-split` | warning | Two consecutive events in one phrase are more than 8 beats apart, which almost always means a repeated section reused a phrase id without a suffix. |
 
-The alignment check is the one that catches the most real mistakes. It binary-searches the arrangement onsets for anything within 25 ms of the event time, and it also counts how many it found, which is where `thin-chord` comes from.
+The alignment check binary-searches the arrangement onsets for anything within 25 ms of the event time, and counts how many it found, which is where `thin-chord` comes from.
 
 ## Density limits
 
@@ -435,7 +435,7 @@ The alignment check is the one that catches the most real mistakes. It binary-se
 
 The notes-per-second check walks a two-pointer window over the note list, and resets the window start after it reports, so one very dense passage produces one error rather than one per note.
 
-Note that `maxNotesPerSecond` counts **notes**, not events: a three-lane chord spends three of the budget. That is deliberate, since three keys is three actions.
+`maxNotesPerSecond` counts notes, not events: a three-lane chord spends three of the budget. That is deliberate, since three keys is three actions.
 
 `validateChart` takes an optional third argument, `limitsOverride: Partial<DensityLimits>`, which is merged over the difficulty's row. It exists for tests and for tooling that wants to ask "would this pass at apprentice spacing?". Track validation never uses it, so a chart that ships is always measured against its own difficulty.
 

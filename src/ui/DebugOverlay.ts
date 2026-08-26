@@ -88,7 +88,7 @@ export class DebugOverlay {
     );
     this.line(grid, "Judgment offset", (s) => ms(s.judgmentOffsetMs));
     this.line(grid, "Approach", (s) => `${s.approachMs} ms`);
-    this.line(grid, "Beat", (s) => `${s.beat.toFixed(2)}, measure ${s.measure}.${(s.beatInMeasure + 1).toFixed(2)}`);
+    this.line(grid, "Beat", (s) => `${s.beat.toFixed(2)}, measure ${s.measure}, beat ${(s.beatInMeasure + 1).toFixed(2)}`);
     this.line(grid, "Music cursor", (s) => `${s.eventCursor}, ${s.scheduledCount} scheduled`);
     this.line(grid, "Voices", (s) => `${s.liveVoices} music, ${s.liveEffects} effects`);
     this.line(grid, "On screen", (s) => `${s.visibleNotes} notes, ${s.particles} sparks`);

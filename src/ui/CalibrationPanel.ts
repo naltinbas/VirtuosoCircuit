@@ -332,7 +332,9 @@ export class CalibrationPanel implements Screen {
     event.stopPropagation();
     manager.tap(this.app.calibration.perfToAudioMs(event.timeStamp));
     const result = manager.result();
-    this.testStatus.textContent = `${result.kept} of ${GUIDED_CALIBRATION.minTaps} steady taps, median ${formatOffset(result.medianMs)}.`;
+    this.testStatus.textContent = result.enough
+      ? `${result.kept} steady taps, median ${formatOffset(result.medianMs)}. Finish when you are ready.`
+      : `${result.kept} of ${GUIDED_CALIBRATION.minTaps} steady taps, median ${formatOffset(result.medianMs)}.`;
     if (manager.full) this.finishTest();
   };
 

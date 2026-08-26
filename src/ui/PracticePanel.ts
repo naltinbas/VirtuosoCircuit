@@ -54,6 +54,9 @@ export class PracticePanel implements Screen {
   private readonly ghost: ToggleField;
 
   private measures: Measure[] = [{ number: 1, timeMs: 0 }];
+  /** Where the run will pick up from. Held here because the game snapshot
+   * only catches up with a seek on the next frame. */
+  private atMs = 0;
 
   constructor(app: AppApi) {
     this.app = app;
@@ -79,7 +82,7 @@ export class PracticePanel implements Screen {
       },
     });
 
-    this.playhead = this.measureSlider("Playhead", (index) => this.app.seekTo(this.measureAt(index).timeMs));
+    this.playhead = this.measureSlider("Playhead", (index) => this.seek(this.measureAt(index).timeMs));
     this.loopStart = this.measureSlider("Loop start", (index) =>
       this.setLoop(index, this.loopEnd.input.valueAsNumber),
     );
@@ -151,13 +154,26 @@ export class PracticePanel implements Screen {
     for (const slider of [this.playhead, this.loopStart, this.loopEnd]) {
       slider.input.max = `${this.measures.length - 1}`;
     }
-    const songMs = Math.max(0, Math.min(durationMs, session.game.snapshot().songMs));
-    this.playhead.set(this.measureIndexAt(songMs));
+    this.atMs = Math.max(0, Math.min(durationMs, session.game.snapshot().songMs));
     this.loopStart.set(this.measureIndexAt(practice.loopStartMs));
     this.loopEnd.set(this.measureIndexAt(practice.loopEndMs));
     this.loopToggle.set(practice.loopEnabled);
-    this.position.textContent = `${session.track.metadata.title}, ${formatClock(songMs)} of ${formatClock(durationMs)}`;
     this.buildSections(session.track.sections);
+    this.refresh();
+  }
+
+  /** Writes the position, without asking the game where it is. */
+  private refresh(): void {
+    const session = this.app.session;
+    if (!session) return;
+    this.playhead.set(this.measureIndexAt(this.atMs));
+    this.position.textContent = `${session.track.metadata.title}, ${formatClock(this.atMs)} of ${formatClock(session.track.metadata.durationMs)}`;
+  }
+
+  private seek(ms: number): void {
+    this.atMs = ms;
+    this.app.seekTo(ms);
+    this.refresh();
   }
 
   onEscape(): boolean {
@@ -190,8 +206,10 @@ export class PracticePanel implements Screen {
     const durationMs = this.app.session?.track.metadata.durationMs ?? 0;
     if (section === null) this.app.setPracticeLoop(0, durationMs, false);
     else this.app.setPracticeLoop(section.startMs, section.endMs, true);
-    this.app.seekTo(section === null ? 0 : section.startMs);
-    this.show();
+    this.loopStart.set(this.measureIndexAt(practice.loopStartMs));
+    this.loopEnd.set(this.measureIndexAt(practice.loopEndMs));
+    this.loopToggle.set(practice.loopEnabled);
+    this.seek(section === null ? 0 : section.startMs);
   }
 
   /** A slider over measure numbers, so every position lands on a downbeat. */
@@ -243,12 +261,11 @@ export class PracticePanel implements Screen {
   }
 
   private jumpCheckpoint(direction: number): void {
-    const session = this.app.session;
-    const practice = session?.practice;
-    if (!session || !practice) return;
-    const songMs = session.game.snapshot().songMs;
-    const target = direction < 0 ? practice.checkpointBefore(songMs) : practice.checkpointAfter(songMs);
-    this.app.seekTo(target);
-    this.show();
+    const practice = this.app.session?.practice;
+    if (!practice) return;
+    // A jump is measured from where the panel already moved to, so two clicks
+    // move two checkpoints even before the next frame lands.
+    const target = direction < 0 ? practice.checkpointBefore(this.atMs) : practice.checkpointAfter(this.atMs);
+    this.seek(target);
   }
 }

@@ -624,10 +624,13 @@ export class App implements AppApi {
       this.focusHighway();
       return;
     }
-    const target = this.router.resumeState ?? (session.mode === "practice" ? "PRACTICE" : "PLAYING");
+    const resumeTarget = this.router.resumeState ?? (session.mode === "practice" ? "PRACTICE" : "PLAYING");
+    // A seek made while paused wins: the countdown only makes sense while the
+    // clock is still before the first note.
+    const target = resumeTarget === "COUNTDOWN" && this.clock.pausedSongMs >= 0 ? "PLAYING" : resumeTarget;
     if (target === "COUNTDOWN") {
       // Give the player a moment of run up rather than dropping them on a note.
-      const back = clamp(this.clock.pausedSongMs - 1000, this.countdownStartMs(), 0);
+      const back = Math.max(this.clock.pausedSongMs - 1000, this.countdownStartMs());
       this.clock.seek(back);
     }
     this.router.goTo(target);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chart, lanes, melody, midiToPitch, phrase, pitchToMidi, repeatNotes } from "../src/charts/Authoring";
+import { chart, lanes, melody, midiToPitch, phrase, pitchToMidi, repeatNotes, shiftEvents, trill } from "../src/charts/Authoring";
 
 describe("pitch names", () => {
   it("maps C4 to 60 and handles accidentals", () => {
@@ -70,5 +70,31 @@ describe("lane notation", () => {
     expect(c.events.map((e) => e.beat)).toEqual([0, 1, 4, 5]);
     expect(c.events[0].phraseId).toBe("p");
     expect(c.events[2].phraseId).toBeUndefined();
+  });
+});
+
+describe("strict parsing", () => {
+  it("throws on malformed music tokens instead of dropping notes", () => {
+    expect(() => melody(0, "C4@0.5+E4")).toThrow();
+    expect(() => melody(0, "C4/2+E4")).toThrow();
+    expect(() => melody(0, "C4/x")).toThrow();
+    expect(() => melody(0, "@0.5")).toThrow();
+  });
+  it("throws on malformed lane tokens", () => {
+    expect(() => lanes(0, "0,2")).toThrow();
+    expect(() => lanes(0, "4x")).toThrow();
+    expect(() => lanes(0, "0|1")).toThrow();
+    expect(() => lanes(0, "[0, 2]")).toThrow();
+    expect(() => lanes(0, "0/1!")).toThrow();
+    expect(() => lanes(0, "0 &r/1")).toThrow();
+  });
+  it("keeps the sticky duration from & tokens, as documented", () => {
+    expect(lanes(0, "0/1 &4h/2 1 2").map((e) => e.beat)).toEqual([0, 0, 1, 3]);
+  });
+  it("suffixes phrase ids when shifting and builds trills", () => {
+    const p = phrase("a", 0, "0 1");
+    const s = shiftEvents(p, 8, "-rep");
+    expect(s.map((e) => [e.beat, e.phraseId])).toEqual([[8, "a-rep"], [9, "a-rep"]]);
+    expect(trill("x", 0, "0/0.5 1 0 1")[0].phraseId).toBe("trill-x");
   });
 });

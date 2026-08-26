@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chart, lanes } from "../src/charts/Authoring";
+import { chart, lanes, shiftEvents, trill } from "../src/charts/Authoring";
 import { compileChart, compileTrack, mapperFor } from "../src/charts/ChartLoader";
 import { validateChart, validateTrack } from "../src/charts/ChartValidator";
 import { fixtureTrack } from "./fixtures";
@@ -78,5 +78,30 @@ describe("validateTrack", () => {
     def.tempoMap = [{ beat: 0, bpm: 100 }];
     const issues = validateTrack(def, compileTrack(def));
     expect(codes(issues)).toContain("charts");
+  });
+});
+
+describe("phrase and trill rules", () => {
+  const def = fixtureTrack();
+  const track = compileTrack(def);
+  const mapper = mapperFor(track);
+  it("warns when a phrase id spans a repeated section", () => {
+    const p = lanes(0, "0 1 2 3", "same");
+    const c = compileChart(chart("virtuoso", p, shiftEvents(p, 40)), mapper);
+    expect(codes(validateChart(c, track), "warning")).toContain("phrase-split");
+    const ok = compileChart(chart("virtuoso", p, shiftEvents(p, 40, "-2")), mapper);
+    expect(codes(validateChart(ok, track), "warning")).not.toContain("phrase-split");
+  });
+  it("requires trills to alternate lanes with single notes", () => {
+    const bad = compileChart(chart("virtuoso", trill("t", 0, "0 0 1 0")), mapper);
+    expect(codes(validateChart(bad, track))).toContain("trill-lanes");
+    const held = compileChart(chart("virtuoso", trill("t", 0, "0 1h/1 0 1")), mapper);
+    expect(codes(validateChart(held, track))).toContain("trill-lanes");
+    const good = compileChart(chart("virtuoso", trill("t", 0, "0 1 0 1")), mapper);
+    expect(codes(validateChart(good, track))).not.toContain("trill-lanes");
+  });
+  it("reports too many keys once per moment", () => {
+    const c = compileChart(chart("virtuoso", lanes(0, "0h/4 &1h/4"), lanes(2, "[2,3]/1 &4/1")), mapper);
+    expect(validateChart(c, track).filter((i) => i.code === "too-many-keys")).toHaveLength(1);
   });
 });

@@ -65,7 +65,7 @@ export function computeStats(events: readonly ChartEvent[], notes: readonly Note
   let peak = 0;
   let j = 0;
   for (let i = 0; i < notes.length; i++) {
-    while (notes[i].timeMs - notes[j].timeMs > 1000) j++;
+    while (notes[i].timeMs - notes[j].timeMs >= 1000) j++;
     peak = Math.max(peak, i - j + 1);
   }
   return {

@@ -164,7 +164,8 @@ export function validateChart(
         for (const l of o.lanes) keys.add(l);
       }
     }
-    if (keys.size > limits.maxSimultaneousKeys) {
+    const firstAtThisTime = i === 0 || events[i - 1].timeMs !== t;
+    if (keys.size > limits.maxSimultaneousKeys && firstAtThisTime) {
       push(
         "error",
         "too-many-keys",
@@ -172,16 +173,16 @@ export function validateChart(
         e.id,
       );
     }
-    if (singlesAtSameTime > 1 && (i === 0 || events[i - 1].timeMs !== t)) {
+    if (singlesAtSameTime > 1 && firstAtThisTime) {
       push("warning", "split-chord", `several single notes share the beat at ${t.toFixed(0)}ms; write them as a chord`, e.id);
     }
   }
 
-  // Density: sliding one-second window over judgeable notes.
+  // Density: sliding window [t - 1000, t) over judgeable notes.
   const notes = chart.notes;
   let j = 0;
   for (let i = 0; i < notes.length; i++) {
-    while (notes[i].timeMs - notes[j].timeMs > 1000) j++;
+    while (notes[i].timeMs - notes[j].timeMs >= 1000) j++;
     const count = i - j + 1;
     if (count > limits.maxNotesPerSecond) {
       push(
@@ -194,11 +195,39 @@ export function validateChart(
     }
   }
 
-  // Phrases with a single event give a bonus for nothing.
-  const phraseSizes = new Map<string, number>();
-  for (const e of events) if (e.phraseId) phraseSizes.set(e.phraseId, (phraseSizes.get(e.phraseId) ?? 0) + 1);
-  for (const [id, size] of phraseSizes) {
-    if (size < 2) push("warning", "tiny-phrase", `phrase "${id}" has only ${size} event`);
+  // Phrases: a one-event phrase gives a bonus for nothing; a phrase whose
+  // events are far apart is usually a repeated section that forgot a suffix;
+  // trills must alternate lanes and contain only single notes.
+  const phrases = new Map<string, typeof events>();
+  for (const e of events) {
+    if (!e.phraseId) continue;
+    let list = phrases.get(e.phraseId);
+    if (!list) {
+      list = [];
+      phrases.set(e.phraseId, list);
+    }
+    list.push(e);
+  }
+  const beatsPerMs = track.metadata.bpm / 60000;
+  for (const [id, list] of phrases) {
+    if (list.length < 2) push("warning", "tiny-phrase", `phrase "${id}" has only ${list.length} event`);
+    for (let k = 1; k < list.length; k++) {
+      const gapBeats = (list[k].timeMs - list[k - 1].timeMs) * beatsPerMs;
+      if (gapBeats > 8) {
+        push("warning", "phrase-split", `phrase "${id}" has a ${gapBeats.toFixed(1)}-beat gap; repeated sections need distinct phrase ids`, list[k].id);
+        break;
+      }
+    }
+    if (id.startsWith("trill-")) {
+      for (let k = 0; k < list.length; k++) {
+        const e = list[k];
+        if (e.type !== "single") {
+          push("error", "trill-lanes", `trill "${id}" contains a ${e.type} (${e.id}); trills are single notes only`, e.id);
+        } else if (k > 0 && list[k - 1].lanes[0] === e.lanes[0]) {
+          push("error", "trill-lanes", `trill "${id}" repeats lane ${e.lanes[0]} at ${e.id}; consecutive trill notes must alternate lanes`, e.id);
+        }
+      }
+    }
   }
 
   return issues;

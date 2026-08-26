@@ -742,7 +742,7 @@ export class App implements AppApi {
     const session = this.current;
     if (!session?.practice) return;
     session.practice.setLoop(startMs, endMs, enabled);
-    this.transport.setLoop(session.practice.loopStartMs, enabled ? session.practice.loopEndMs : null);
+    this.setTransportLoop(session.practice);
   }
 
   toggleFullscreen(): void {
@@ -1139,7 +1139,7 @@ export class App implements AppApi {
     const passStartMs = practice.passStartMs;
     this.clock.seek(entry);
     this.clock.start(entry);
-    this.transport.setLoop(practice.loopStartMs, practice.loopEnabled ? practice.loopEndMs : null);
+    this.setTransportLoop(practice);
     session.game.reset();
     session.game.skipBefore(passStartMs);
     this.resetAutoplayCursor(entry);
@@ -1163,7 +1163,7 @@ export class App implements AppApi {
     if (!session || !practice) return;
     const passStartMs = practice.passStartMs;
     this.transport.setRate(this.effectiveRate());
-    this.transport.setLoop(practice.loopStartMs, practice.loopEnabled ? practice.loopEndMs : null);
+    this.setTransportLoop(practice);
     this.seekTo(this.practiceEntryMs(practice));
     session.game.skipBefore(passStartMs);
     this.clock.resume();
@@ -1184,6 +1184,15 @@ export class App implements AppApi {
 
   private countdownStartMs(): number {
     return -Math.max(HIGHWAY.countdownMs, this.settings.current.approachMs + 200);
+  }
+
+  /**
+   * The scheduler loops only over a range the practice system is actually
+   * looping: `loopEnabled` can still be true over an empty range, and the
+   * stored bounds are ordered and clamped after the caller handed them over.
+   */
+  private setTransportLoop(practice: PracticeSystem): void {
+    this.transport.setLoop(practice.loopStartMs, practice.looping ? practice.loopEndMs : null);
   }
 
   /** Song time a practice pass enters at, run-up included. */

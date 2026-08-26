@@ -184,9 +184,10 @@ const drumNotes = join(
 //
 // Lanes follow the contour of each phrase: the lowest note of a phrase sits
 // on the lane nearest the left hand and the top note on the right. The
-// fanfare climbs 1 0 1 0 1 3 4 to its D, the answer falls back through the
-// hand. Repeated statements get their own phrase ids through the tag passed
-// to place().
+// fanfare climbs 2 0 2 0 2 3 4 to its D (1 0 3 4 on novice, which takes
+// four of those notes), and the answer falls back down the hand. A phrase
+// that comes round again gets its own id through the tag passed to place(),
+// so the two statements never share a bonus.
 
 interface Spec {
   id: string;
@@ -259,9 +260,9 @@ const N_TRANSITION: Spec[] = [
 
 const N_CODA: Spec[] = [
   { id: "e1", at: 8, text: "1/1 2/1 3/1 2/1" },
-  { id: "e1", at: 12, text: "3/1 2/1 0/1 2/1" },
+  { id: "e1", at: 12, text: "[1,3]/1 2/1 0/1 2/1" },
   { id: "e2", at: 16, text: "0/1 1/1 3/1 4/1" },
-  { id: "e2", at: 20, text: "4/1 3/1 2/1 1/1" },
+  { id: "e2", at: 20, text: "[2,4]!/1 3/1 2/1 1/1" },
   { id: "e3", at: 24, text: "2/1 0/1" },
   { id: "e4", at: 26, text: "1/0.5 2/0.5", trill: true },
   { id: "e5", at: 28, text: "0h!/3 &4!" },
@@ -353,7 +354,7 @@ const V_FANFARE: Spec[] = [
 const V_ANSWER_HEAD: Spec = { id: "g1", at: 0, text: "0h/1 4/0.75 3/0.25 [2,4]/0.5 1 0 2" };
 const V_ANSWER_A: Spec[] = [
   V_ANSWER_HEAD,
-  { id: "g2", at: 4, text: "2/0.75 1/0.25 0/0.5 2 1h!/2" },
+  { id: "g2", at: 4, text: "3/0.75 2/0.25 1/0.5 3 2h!/2" },
   { id: "g2", at: 6.5, text: "3/0.5 4 3" },
 ];
 const V_ANSWER_B: Spec[] = [
@@ -369,8 +370,8 @@ const V_CONTINUATION: Spec[] = [
   { id: "c1", at: 0, text: V_RISE },
   { id: "c1", at: 4, text: V_RISE },
   { id: "c2", at: 8, text: V_TURN },
-  { id: "c2", at: 12, text: "[0,2,4]!/0.5 3 1/0.5 3 2h!/1.5" },
-  { id: "c2", at: 14.5, text: "0/0.5 1 0" },
+  { id: "c2", at: 12, text: "[1,3,4]!/0.5 2 0/0.5 2 1h!/1.5" },
+  { id: "c2", at: 14.5, text: "3/0.5 2 3" },
   { id: "c3", at: 16, text: V_RISE },
   { id: "c3", at: 20, text: V_RISE },
   { id: "c4", at: 24, text: "4/0.75 3/0.25 2/0.5 1" },
@@ -388,7 +389,7 @@ const V_TRANSITION: Spec[] = [
   { id: "d3", at: 8, text: V_RUN_DOWN },
   { id: "d4", at: 12, text: V_RUN_UP },
   { id: "d5", at: 16, text: V_TURN },
-  { id: "d6", at: 20, text: "2/0.5 1 2 1 0 1 [2,4]!/1" },
+  { id: "d6", at: 20, text: "3/0.5 2 3 2 1 2 [1,4]!/1" },
   { id: "d7", at: 24, text: "4/0.5 3 2 1" },
   { id: "d8", at: 26, text: "3/0.5 2 1 0" },
   { id: "d9", at: 28, text: "[1,4]!/0.5 3 1/0.5 3" },

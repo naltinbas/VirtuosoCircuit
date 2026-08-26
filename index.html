@@ -9,8 +9,9 @@
   </head>
   <body>
     <div id="app">
-      <canvas id="highway" aria-label="Note highway" role="img"></canvas>
-      <div id="ui" aria-live="polite"></div>
+      <canvas id="highway" tabindex="-1" aria-label="Note highway" role="img"></canvas>
+      <div id="ui"></div>
+      <div id="announcer" class="sr-only" aria-live="polite"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

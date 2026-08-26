@@ -947,3 +947,18 @@ body.reduced-motion .hud__message.is-flash {
   color: var(--amber);
   font-size: 0.86em;
 }
+
+.field--action .field__control {
+  justify-content: flex-start;
+}
+
+.field__value--wide {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--muted);
+}
+
+.button--inline {
+  padding: 0.35em 0.9em;
+  font-size: 0.9em;
+}

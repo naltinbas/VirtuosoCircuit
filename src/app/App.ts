@@ -35,6 +35,7 @@ import { Hud } from "../ui/Hud";
 import { MainMenu } from "../ui/MainMenu";
 import { PauseMenu } from "../ui/PauseMenu";
 import { ResultsScreen } from "../ui/ResultsScreen";
+import { SettingsPanel } from "../ui/SettingsPanel";
 import { TrackSelect } from "../ui/TrackSelect";
 import { UIManager } from "../ui/UIManager";
 import { clamp } from "../utils/MathUtils";
@@ -443,6 +444,7 @@ export class App implements AppApi {
     this.ui.register("TRACK_SELECT", new TrackSelect(this));
     this.ui.register("PAUSED", new PauseMenu(this));
     this.ui.register("RESULTS", new ResultsScreen(this));
+    this.ui.register("SETTINGS", new SettingsPanel(this));
 
     this.applySettings(this.settings.current);
     this.settings.on("change", ({ settings, changed }) => this.onSettingsChanged(settings, changed));

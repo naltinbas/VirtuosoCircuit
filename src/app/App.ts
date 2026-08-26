@@ -33,6 +33,7 @@ import { safeLocalStorage } from "../persistence/Storage";
 import { GameRenderer, type RenderFrame } from "../render/GameRenderer";
 import { Hud } from "../ui/Hud";
 import { CalibrationPanel } from "../ui/CalibrationPanel";
+import { ChartEditor } from "../ui/ChartEditor";
 import { ControlsPanel } from "../ui/ControlsPanel";
 import { CreditsPanel } from "../ui/CreditsPanel";
 import { DebugOverlay } from "../ui/DebugOverlay";
@@ -457,6 +458,7 @@ export class App implements AppApi {
     this.ui.register("CREDITS", new CreditsPanel(this));
 
     if (this.debug !== null) {
+      this.ui.register("CHART_EDITOR", new ChartEditor(this));
       this.debugOverlay = new DebugOverlay(this, this.debug);
       this.root.append(this.debugOverlay.element);
     }

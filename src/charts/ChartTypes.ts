@@ -63,6 +63,8 @@ export interface TrackMetadata {
   composer: string;
   composerShort: string;
   catalogNumber?: string;
+  /** Attribution caveats, e.g. a piece long credited to one composer but written by another. */
+  attributionNote?: string;
   movementOrExcerpt: string;
   /** Initial tempo (beats per minute, where a beat is the denominator of the time signature). */
   bpm: number;

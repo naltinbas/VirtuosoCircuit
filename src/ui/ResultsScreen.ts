@@ -2,13 +2,39 @@
 // judgment spread and where the presses landed in time.
 
 import type { AppApi, ResultsData } from "../app/App";
-import { DIFFICULTY_LABELS, JUDGMENTS, JUDGMENT_LABELS } from "../app/Config";
+import { DIFFICULTY_LABELS, JUDGMENTS, JUDGMENT_LABELS, JUDGMENT_WINDOWS_MS } from "../app/Config";
 import type { TrackChart } from "../charts/ChartTypes";
 import { timingHistogram } from "../gameplay/ScoreSystem";
 import { formatOffset, formatPercent, formatScore } from "../utils/TimeUtils";
 import { button, el, type Screen } from "./UIManager";
 
 const HISTOGRAM_BUCKET_MS = 20;
+/** The chart spans the whole hit range, which is the widest window that scores. */
+const HISTOGRAM_RANGE_MS = JUDGMENT_WINDOWS_MS.faint;
+
+export interface HistogramColumn {
+  fromMs: number;
+  toMs: number;
+  count: number;
+  /** True for the column a press landing exactly on the beat falls into. */
+  center: boolean;
+}
+
+/** The columns the timing chart draws, each labelled with the window it counts. */
+export function histogramColumns(deltas: readonly number[]): HistogramColumn[] {
+  const buckets = timingHistogram(deltas, HISTOGRAM_BUCKET_MS, HISTOGRAM_RANGE_MS);
+  const centerIndex = Math.floor(HISTOGRAM_RANGE_MS / HISTOGRAM_BUCKET_MS);
+  return buckets.map((count, index) => {
+    const fromMs = -HISTOGRAM_RANGE_MS + index * HISTOGRAM_BUCKET_MS;
+    return {
+      fromMs,
+      // Twice the range is not a whole number of buckets, so the last one is short.
+      toMs: Math.min(fromMs + HISTOGRAM_BUCKET_MS, HISTOGRAM_RANGE_MS),
+      count,
+      center: index === centerIndex,
+    };
+  });
+}
 
 export class ResultsScreen implements Screen {
   readonly element: HTMLElement;
@@ -123,31 +149,30 @@ export class ResultsScreen implements Screen {
 
   private histogram(data: ResultsData): HTMLElement {
     const deltas = data.summary.timingDeltas;
-    const buckets = timingHistogram(deltas, HISTOGRAM_BUCKET_MS);
-    const peak = Math.max(1, ...buckets);
-    const range = (buckets.length * HISTOGRAM_BUCKET_MS) / 2;
+    const columns = histogramColumns(deltas);
+    let peak = 1;
+    for (const column of columns) peak = Math.max(peak, column.count);
     const block = el("div", { className: "results__timing" });
     block.append(el("p", { className: "results__label", text: "Timing distribution" }));
 
     const chart = el("div", { className: "histogram" });
     chart.setAttribute("role", "img");
     chart.setAttribute("aria-label", this.timingSummary(deltas));
-    for (let i = 0; i < buckets.length; i++) {
+    for (const entry of columns) {
       const column = el("div", { className: "histogram__column" });
       const fill = el("div", { className: "histogram__fill" });
-      fill.style.transform = `scaleY(${(buckets[i] / peak).toFixed(3)})`;
-      const from = Math.round(-range + i * HISTOGRAM_BUCKET_MS);
-      column.title = `${from} to ${from + HISTOGRAM_BUCKET_MS} ms: ${buckets[i]}`;
-      if (from === -HISTOGRAM_BUCKET_MS || from === 0) column.classList.add("histogram__column--center");
+      fill.style.transform = `scaleY(${(entry.count / peak).toFixed(3)})`;
+      column.title = `${entry.fromMs} to ${entry.toMs} ms: ${entry.count}`;
+      if (entry.center) column.classList.add("histogram__column--center");
       column.append(fill);
       chart.append(column);
     }
 
     const axis = el("div", { className: "histogram__axis" });
     axis.append(
-      el("span", { text: `${Math.round(-range)} ms early` }),
+      el("span", { text: `${-HISTOGRAM_RANGE_MS} ms early` }),
       el("span", { text: "on time" }),
-      el("span", { text: `${Math.round(range)} ms late` }),
+      el("span", { text: `${HISTOGRAM_RANGE_MS} ms late` }),
     );
     block.append(chart, axis);
     return block;

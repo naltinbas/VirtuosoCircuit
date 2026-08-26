@@ -1,12 +1,13 @@
 // Bach, Cello Suite No. 1 in G major, BWV 1007, Prelude (opening).
 //
 // The prelude is one long sweep of sixteenth-note arpeggios over a slowly
-// moving bass. This excerpt keeps the opening figures in their score order
-// through the first phrase group and adds two link bars (subdominant, then
-// dominant seventh) written in the same figure shape so the group can turn
-// back to the top. The group is heard twice, the second time with the bass
-// pulsing on every beat instead of every half bar, and the excerpt closes
-// with the opening bar, the dominant bar and a held G major chord.
+// moving bass. This excerpt opens with the figures of the score in their
+// order, follows the harmonies of the first phrase group (G, C/G, D7/G, G,
+// E minor, A7/C#, D/F#, E minor) and adds two link bars on the subdominant
+// and the dominant seventh, written in the same figure shape, so the group
+// can turn back to the top. The group is heard twice, the second time with
+// the bass pulsing on every beat instead of every half bar, and the excerpt
+// closes with the opening bar, the dominant bar and a held G major chord.
 //
 // Form, 23 bars of 4/4: A (8 bars), link, A (8 bars), link, coda.
 

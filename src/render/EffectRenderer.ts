@@ -48,7 +48,8 @@ interface Spark {
   ageMs: number;
   lifeMs: number;
   size: number;
-  color: string;
+  /** The colour is resolved at draw time, so a palette change reaches sparks already in flight. */
+  lane: Lane;
 }
 
 /** Downward pull on a spark, in px per ms squared. */
@@ -65,7 +66,7 @@ export class EffectRenderer {
     12,
   );
   private readonly sparkPool = new ObjectPool<Spark>(
-    () => ({ x0: 0, y0: 0, vx: 0, vy: 0, spawnSongMs: 0, x: 0, y: 0, ageMs: 0, lifeMs: 0, size: 1, color: "#ffffff" }),
+    () => ({ x0: 0, y0: 0, vx: 0, vy: 0, spawnSongMs: 0, x: 0, y: 0, ageMs: 0, lifeMs: 0, size: 1, lane: 0 }),
     (spark) => {
       spark.ageMs = 0;
       spark.spawnSongMs = 0;
@@ -235,7 +236,7 @@ export class EffectRenderer {
     if (!frame.effectsEnabled) return;
     this.drawLaneFlashes(ctx, m, pal, frame);
     this.drawSurge(ctx, m, pal, frame);
-    this.drawSparks(ctx, pal);
+    this.drawSparks(ctx, pal, frame);
     this.drawPopups(ctx, m, pal, frame);
     this.drawEdgePulse(ctx, m, frame);
     this.drawVignette(ctx, m, frame);
@@ -294,14 +295,15 @@ export class EffectRenderer {
     ctx.globalAlpha = 1;
   }
 
-  private drawSparks(ctx: CanvasRenderingContext2D, pal: Palette): void {
+  private drawSparks(ctx: CanvasRenderingContext2D, pal: Palette, frame: RenderFrame): void {
     for (let i = 0; i < this.sparks.length; i++) {
       const spark = this.sparks[i];
       const fade = effectFade(spark.ageMs, spark.lifeMs);
       if (fade <= 0) continue;
-      ctx.fillStyle = spark.color;
+      const color = laneColor(spark.lane, frame.highContrast);
+      ctx.fillStyle = color;
       ctx.globalAlpha = fade;
-      setGlow(ctx, pal, spark.color, 8 * fade);
+      setGlow(ctx, pal, color, 8 * fade);
       ctx.beginPath();
       ctx.arc(spark.x, spark.y, spark.size * fade, 0, TAU);
       ctx.fill();
@@ -388,7 +390,6 @@ export class EffectRenderer {
     if (!m) return;
     const x = m.layout.laneGateX[lane];
     const y = m.layout.gateY;
-    const color = laneColor(lane, false);
     for (let i = 0; i < SCENE.burstParticles; i++) {
       const spark = this.sparkPool.acquire();
       // Upward fan, so the sparks read as the gem breaking through the gate.
@@ -404,7 +405,7 @@ export class EffectRenderer {
       spark.ageMs = 0;
       spark.lifeMs = LAYOUT.burstLifeMs * (0.7 + this.random() * 0.5);
       spark.size = 1.5 + this.random() * 2.5;
-      spark.color = color;
+      spark.lane = lane;
       this.sparks.push(spark);
     }
     this.laneFlashSongMs[lane] = songMs;

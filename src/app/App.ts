@@ -1129,15 +1129,18 @@ export class App implements AppApi {
     const practice = session?.practice;
     if (!session || !practice) return;
     const entry = practice.entryMs();
+    // With the loop off the pass plays from the top, so the skip and the count
+    // in follow the pass start rather than a loop start nobody is looping.
+    const passStartMs = practice.passStartMs;
     this.clock.seek(entry);
     this.clock.start(entry);
     this.transport.setLoop(practice.loopStartMs, practice.loopEnabled ? practice.loopEndMs : null);
     session.game.reset();
-    session.game.skipBefore(practice.loopStartMs);
+    session.game.skipBefore(passStartMs);
     this.resetAutoplayCursor(entry);
     this.router.goTo("PRACTICE");
     this.transport.start();
-    this.hud.setCountIn(practice.loopStartMs, this.beatMs());
+    this.hud.setCountIn(passStartMs, this.beatMs());
     this.lastDisplayMs = null;
   }
 
@@ -1153,13 +1156,14 @@ export class App implements AppApi {
     const session = this.current;
     const practice = session?.practice;
     if (!session || !practice) return;
+    const passStartMs = practice.passStartMs;
     this.transport.setRate(this.effectiveRate());
     this.transport.setLoop(practice.loopStartMs, practice.loopEnabled ? practice.loopEndMs : null);
     this.seekTo(practice.entryMs());
-    session.game.skipBefore(practice.loopStartMs);
+    session.game.skipBefore(passStartMs);
     this.clock.resume();
     this.transport.resume();
-    this.hud.setCountIn(practice.loopStartMs, this.beatMs());
+    this.hud.setCountIn(passStartMs, this.beatMs());
   }
 
   /** Practice speed, halved again while the debug slow motion is on. */

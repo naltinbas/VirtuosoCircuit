@@ -80,6 +80,36 @@ describe("PracticeSystem", () => {
     expect(practice.entryMs()).toBe(6000 - HIGHWAY.practicePrerollMs);
   });
 
+  it("starts the pass at the top once the loop toggle goes off", () => {
+    const practice = new PracticeSystem(track);
+    practice.setSection(track.sections[1]);
+    expect(practice.passStartMs).toBe(6000);
+    expect(practice.entryMs(1500)).toBe(4500);
+    practice.setLoopEnabled(false);
+    // The pass now plays the whole track, so the loop start is not where it begins.
+    expect(practice.loopStartMs).toBe(6000);
+    expect(practice.passStartMs).toBe(0);
+    expect(practice.entryMs(1500)).toBe(-1500);
+    // An enabled but empty range plays from the top too.
+    practice.setLoop(5000, 5000, true);
+    expect(practice.passStartMs).toBe(0);
+  });
+
+  it("keeps every note countable on a pass that starts at the top", () => {
+    const specs: EventSpec[] = [];
+    for (let i = 0; i < 8; i++) specs.push({ timeMs: 2000 + i * 2000, lanes: [(i % 5) as Lane] });
+    const chart = buildTrack(specs, { durationMs: 20000 });
+    const game = makeGame(chart, { mode: "practice" });
+    const practice = new PracticeSystem(chart);
+    practice.setLoop(10000, 18000, true);
+    practice.setLoopEnabled(false);
+    // What App does when it re-enters a practice pass.
+    game.rearmFrom(practice.entryMs());
+    game.skipBefore(practice.passStartMs);
+    expect(game.snapshot().totalNotes).toBe(8);
+    expect(game.press(0, 2000)?.judgment).toBe("radiant");
+  });
+
   it("loops the section it is handed", () => {
     const practice = new PracticeSystem(track);
     practice.setSection(track.sections[1]);

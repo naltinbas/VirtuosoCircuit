@@ -94,9 +94,14 @@ export class PracticeSystem {
     return this.looping && songMs >= this.stopMs;
   }
 
+  /** First song time the pass plays: the loop start, or the top of the track. */
+  get passStartMs(): number {
+    return this.looping ? this.startMs : 0;
+  }
+
   /** Where a run or a loop pass starts, `prerollMs` of run-up included. */
   entryMs(prerollMs: number = HIGHWAY.practicePrerollMs): number {
-    return (this.looping ? this.startMs : 0) - prerollMs;
+    return this.passStartMs - prerollMs;
   }
 
   isPastEnd(songMs: number): boolean {

@@ -37,6 +37,7 @@ import { ControlsPanel } from "../ui/ControlsPanel";
 import { CreditsPanel } from "../ui/CreditsPanel";
 import { MainMenu } from "../ui/MainMenu";
 import { PauseMenu } from "../ui/PauseMenu";
+import { PracticePanel } from "../ui/PracticePanel";
 import { ResultsScreen } from "../ui/ResultsScreen";
 import { SettingsPanel } from "../ui/SettingsPanel";
 import { TrackSelect } from "../ui/TrackSelect";
@@ -446,6 +447,7 @@ export class App implements AppApi {
     this.ui.register("MAIN_MENU", new MainMenu(this));
     this.ui.register("TRACK_SELECT", new TrackSelect(this));
     this.ui.register("PAUSED", new PauseMenu(this));
+    this.ui.register("PAUSED", new PracticePanel(this), "practice");
     this.ui.register("RESULTS", new ResultsScreen(this));
     this.ui.register("SETTINGS", new SettingsPanel(this));
     this.ui.register("CONTROLS", new ControlsPanel(this));

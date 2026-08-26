@@ -7,7 +7,7 @@
 // in the last few percent before the vanishing point where gems are tiny.
 
 import { LANE_IDENTITIES, LAYOUT } from "../app/Config";
-import { LANES } from "../charts/ChartTypes";
+import { LANES, type Lane } from "../charts/ChartTypes";
 import type { NoteState } from "../gameplay/NoteScheduler";
 import type { RenderFrame } from "./GameRenderer";
 import {
@@ -46,6 +46,7 @@ export class NoteRenderer {
     this.drawChordLinks(ctx, m, pal, frame);
     this.drawTrillLinks(ctx, m, frame);
     this.drawHeads(ctx, m, pal, frame);
+    if (frame.showNoteIds) this.drawNoteIds(ctx, m, pal, frame);
     ctx.globalAlpha = 1;
   }
 
@@ -231,6 +232,28 @@ export class NoteRenderer {
           ctx.lineWidth = pal.outlineWidth;
         }
       }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  private drawNoteIds(ctx: CanvasRenderingContext2D, m: ViewMetrics, pal: Palette, frame: RenderFrame): void {
+    const { layout } = m;
+    ctx.font = m.fontSmall;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = pal.textMuted;
+    ctx.globalAlpha = 0.85;
+    for (let i = 0; i < frame.noteCount; i++) {
+      const view = frame.notes[i];
+      const progress = noteProgress(view.note.timeMs, frame.displayMs, frame.approachMs);
+      if (progress < -LAYOUT.pastGateFraction || progress > 1) continue;
+      const lane: Lane = view.note.lane;
+      const size = layout.receptorRadius * NOTE_SIZE * noteScaleAtProgress(progress);
+      ctx.fillText(
+        view.note.id,
+        laneCenterAtProgress(layout, lane, progress) + size + 4,
+        yAtProgress(layout, progress),
+      );
     }
     ctx.globalAlpha = 1;
   }

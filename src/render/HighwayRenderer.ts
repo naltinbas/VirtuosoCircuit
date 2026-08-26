@@ -5,14 +5,15 @@
 // caller freezes under reduced motion and while a frame is frozen, so nothing
 // here needs a motion branch of its own.
 
-import { HIGHWAY, LANE_IDENTITIES, LAYOUT } from "../app/Config";
-import { LANES, type Lane } from "../charts/ChartTypes";
-import { clamp, seededRandom } from "../utils/MathUtils";
+import { HIGHWAY, JUDGMENTS, LANE_IDENTITIES, LAYOUT } from "../app/Config";
+import { LANES, type BeatMark, type Lane } from "../charts/ChartTypes";
+import { clamp, lowerBound, seededRandom } from "../utils/MathUtils";
 import type { RenderFrame } from "./GameRenderer";
-import { edgeXAtProgress, effectFade, yAtProgress } from "./Geometry";
+import { edgeXAtProgress, effectFade, noteProgress, visibleBackMs, yAtProgress } from "./Geometry";
 import {
   SCENE,
   clearGlow,
+  judgmentColor,
   laneColor,
   pathLaneColumn,
   pathLaneSymbol,
@@ -28,6 +29,7 @@ const PARTICLE_STRIDE = 4;
 // Reused so a dashed stroke does not allocate an array per frame.
 const GHOST_DASH: number[] = [6, 6];
 const NO_DASH: number[] = [];
+const beatTimeKey = (mark: BeatMark): number => mark.timeMs;
 
 export class HighwayRenderer {
   private cacheWidth = -1;
@@ -356,6 +358,87 @@ export class HighwayRenderer {
         ctx.textBaseline = "top";
         ctx.fillText(labels[lane], x, y + radius + LAYOUT.keyLabelOffsetPx);
       }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /** Beat grid and hit windows sit under the notes so they never hide a gem. */
+  drawDebugUnder(ctx: CanvasRenderingContext2D, m: ViewMetrics, pal: Palette, frame: RenderFrame): void {
+    if (frame.showHitWindows) this.drawHitWindows(ctx, m, frame);
+    if (frame.showBeatGrid) this.drawBeatGrid(ctx, m, pal, frame);
+  }
+
+  /** Lane bounds go over everything, because they are a measuring tool. */
+  drawDebugOver(ctx: CanvasRenderingContext2D, m: ViewMetrics, pal: Palette, frame: RenderFrame): void {
+    if (!frame.showLaneBounds) return;
+    const { layout } = m;
+    ctx.setLineDash(GHOST_DASH);
+    ctx.lineWidth = 1;
+    ctx.globalAlpha = 0.7;
+    for (let edge = 0; edge <= LANES.length; edge++) {
+      ctx.strokeStyle = edge === 0 || edge === LANES.length ? pal.gridDownbeat : pal.grid;
+      ctx.beginPath();
+      ctx.moveTo(edgeXAtProgress(layout, edge, -LAYOUT.pastGateFraction), yAtProgress(layout, -LAYOUT.pastGateFraction));
+      ctx.lineTo(edgeXAtProgress(layout, edge, 1), layout.spawnY);
+      ctx.stroke();
+    }
+    ctx.setLineDash(NO_DASH);
+    ctx.font = m.fontSmall;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillStyle = pal.textMuted;
+    for (const lane of LANES) {
+      ctx.fillText(LANE_IDENTITIES[lane].name, layout.laneGateX[lane], layout.spawnY - 4);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  private drawBeatGrid(
+    ctx: CanvasRenderingContext2D,
+    m: ViewMetrics,
+    pal: Palette,
+    frame: RenderFrame,
+  ): void {
+    const grid = frame.track.beatGrid;
+    const { layout } = m;
+    let index = lowerBound(grid, visibleBackMs(frame.displayMs, frame.approachMs), beatTimeKey);
+    ctx.lineWidth = 1;
+    for (; index < grid.length; index++) {
+      const mark = grid[index];
+      const progress = noteProgress(mark.timeMs, frame.displayMs, frame.approachMs);
+      if (progress > 1) break;
+      const y = yAtProgress(layout, progress);
+      ctx.strokeStyle = mark.isDownbeat ? pal.gridDownbeat : pal.grid;
+      ctx.globalAlpha = mark.isDownbeat ? 0.55 : 0.28;
+      ctx.beginPath();
+      ctx.moveTo(edgeXAtProgress(layout, 0, progress), y);
+      ctx.lineTo(edgeXAtProgress(layout, LANES.length, progress), y);
+      ctx.stroke();
+      if (mark.isDownbeat) {
+        ctx.font = m.fontSmall;
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.fillStyle = pal.gridDownbeat;
+        ctx.fillText(String(mark.measure), edgeXAtProgress(layout, 0, progress) - 6, y);
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  private drawHitWindows(ctx: CanvasRenderingContext2D, m: ViewMetrics, frame: RenderFrame): void {
+    const { layout } = m;
+    const left = edgeXAtProgress(layout, 0, 0);
+    const right = edgeXAtProgress(layout, LANES.length, 0);
+    // Widest window first, so the tighter ones read as brighter bands on top.
+    for (let i = JUDGMENTS.length - 1; i >= 0; i--) {
+      const judgment = JUDGMENTS[i];
+      const windowMs = frame.windows[judgment];
+      const progress = windowMs / frame.approachMs;
+      const yNear = yAtProgress(layout, -progress);
+      const yFar = yAtProgress(layout, progress);
+      ctx.fillStyle = judgmentColor(judgment, frame.highContrast);
+      ctx.globalAlpha = 0.09;
+      ctx.fillRect(left, yFar, right - left, yNear - yFar);
     }
     ctx.globalAlpha = 1;
   }

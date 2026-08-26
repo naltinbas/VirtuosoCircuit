@@ -134,8 +134,10 @@ export class GameRenderer {
     const energy = beamEnergy(frame.game.aura, frame.game.auraMax, frame.game.combo);
     this.highway.drawBackdrop(ctx, m, pal, this.sceneTimeMs, energy, deltaMs);
     this.highway.drawCorridor(ctx, m, pal, frame);
+    this.highway.drawDebugUnder(ctx, m, pal, frame);
     this.highway.drawGate(ctx, m, pal, frame);
     this.noteLayer.draw(ctx, m, pal, frame);
+    this.highway.drawDebugOver(ctx, m, pal, frame);
 
     if (frame.game.failed) {
       ctx.globalAlpha = 1 - FAILED_DIM;

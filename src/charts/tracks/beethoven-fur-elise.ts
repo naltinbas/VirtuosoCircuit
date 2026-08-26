@@ -11,7 +11,7 @@
 // accompaniment introduction so the upbeat E5 D#5 falls on the last beat of
 // bar 2 and every later bar line sits on a multiple of three beats.
 
-import { chart, lanes, melody, part, phrase, trill } from "../Authoring";
+import { chart, melody, part, phrase, trill } from "../Authoring";
 import type { ArrangementNote, BeatEvent, TrackDefinition } from "../ChartTypes";
 
 const BPM = 200;
@@ -87,6 +87,88 @@ pluckNotes.push(...melody(CODA, "r/3 A2/0.5 E3 A3", 0.5).notes);
 padNotes.push(...melody(CODA, "A3+C4+E4/3 A3+C4+E4/3", 0.35).notes);
 bassNotes.push(...melody(CODA, "A2/3 A2/3", 0.6).notes);
 
+// ---------------------------------------------------------------------------
+// Charts
+// ---------------------------------------------------------------------------
+//
+// Lanes follow the shape of each phrase rather than absolute pitch, because
+// the theme sits high and its answer low. In the theme bar E5 is lane 4,
+// D#5 lane 3, B4 the dip to lane 2, D5 back to 4 and C5 to 3. In the
+// answering bars the rise C4 E4 A4 is lanes 0 1 2, the rise E4 G#4 B4 is
+// lanes 1 2 3, and the left-hand arpeggio notes take the two free low lanes.
+
+/** Mark the first token of a passage as an accent. */
+function accented(text: string): string {
+  return text.replace(/^(\d)/, "$1!");
+}
+
+// Novice: the peak of the theme bar, the sustained melody note of each
+// answering bar and one note of the figure that leads out of it.
+const N_OPEN = "4/1 r/1 4/1 2h/1.5 r/0.5 0/1";
+const N_TURN = "2h/1.5 r/0.5 1/1 3h/1.5 r/0.5 4/1";
+// The closing bar falls B4 A4 at first and takes the bass with it later on.
+const N_CLOSE = ["2h/1.5 r/1.5 3/1 2!/1", "2h/1.5 r/2.5 [0,2]!/1"];
+const N_CODA = "4!/1 r/2 [2,4]!/1";
+
+const noviceEvents: BeatEvent[] = [];
+for (let i = 0; i < PERIOD_COUNT; i++) {
+  const p = periodStart(i);
+  const closing = i % 2 === 1;
+  const late = Math.floor(i / 2) >= STATEMENTS / 2;
+  noviceEvents.push(...phrase(`a${i}`, p, closing ? N_OPEN : accented(N_OPEN)));
+  noviceEvents.push(
+    ...phrase(`b${i}`, p + 2 * BAR, closing ? N_CLOSE[late ? 1 : 0] : N_TURN),
+  );
+}
+noviceEvents.push(...phrase("coda", CODA, N_CODA));
+
+// Apprentice: the head of the theme bar and its D5, then the sustained note
+// of every answering bar with the two sixteenths that lead out of it.
+const A_OPEN = "4/0.5 3 r/1 4/0.5 r/0.5 2h/1.5 r/0.5 0/0.5 1";
+const A_TURN = "2h/1.5 r/0.5 1/0.5 2 3h/1.5 r/0.5 4/0.5";
+const A_CLOSE = "2h/1.5 r/1 4/0.5 3 r/0.5 [0,2]!/0.5";
+const A_CODA = "4!/0.5 3 r/2 [2,4]!/1";
+
+const apprenticeEvents: BeatEvent[] = [];
+for (let i = 0; i < PERIOD_COUNT; i++) {
+  const p = periodStart(i);
+  const closing = i % 2 === 1;
+  apprenticeEvents.push(...phrase(`a${i}`, p, closing ? A_OPEN : accented(A_OPEN)));
+  apprenticeEvents.push(...phrase(`b${i}`, p + 2 * BAR, closing ? A_CLOSE : A_TURN));
+}
+apprenticeEvents.push(...phrase("coda", CODA, A_CODA));
+
+// Virtuoso: every sixteenth of the theme, the written-out E5 D#5 alternation
+// as a trill phrase, and from the fourth statement on the left-hand arpeggio
+// notes that run under the held melody notes.
+const V_TRILL = "4/0.5 3 4 3 4";
+const V_TRILL_OPEN = "4/0.5 3 4! 3 4";
+const V_FALL = "2/0.5 4 3 2h/1.5";
+const V_RISE = "0/0.5 1 2h/1.5";
+const V_TURN = "1/0.5 2 3h/1.5";
+const V_CLOSE = ["1/0.5 4 3 r/0.5 2!", "1/0.5 4 3 r/0.5 [1,2]!"];
+/** The two arpeggio notes that run on under a held melody note. */
+const V_UNDER = "0/0.5 1";
+
+const virtuosoEvents: BeatEvent[] = [];
+for (let i = 0; i < PERIOD_COUNT; i++) {
+  const p = periodStart(i);
+  const closing = i % 2 === 1;
+  // The arpeggio notes join the chart once the bass doubles the left hand.
+  const under = Math.floor(i / 2) >= 3;
+  virtuosoEvents.push(...trill(`t${i}`, p - 1, closing ? V_TRILL : V_TRILL_OPEN));
+  virtuosoEvents.push(...phrase(`a${i}`, p + 1.5, V_FALL));
+  virtuosoEvents.push(...phrase(`b${i}`, p + 5, V_RISE));
+  virtuosoEvents.push(...phrase(`c${i}`, p + 8, closing ? V_CLOSE[under ? 1 : 0] : V_TURN));
+  if (under) {
+    virtuosoEvents.push(...phrase(`a${i}`, p + 3.5, V_UNDER));
+    virtuosoEvents.push(...phrase(`b${i}`, p + 6.5, V_UNDER));
+    if (!closing) virtuosoEvents.push(...phrase(`c${i}`, p + 9.5, V_UNDER));
+  }
+}
+virtuosoEvents.push(...trill("coda", CODA - 1, V_TRILL_OPEN));
+virtuosoEvents.push(...phrase("coda", CODA + 2.5, "3/0.5 [0,2,4]!/0.5"));
+
 const def: TrackDefinition = {
   metadata: {
     id: "beethoven-fur-elise",
@@ -127,7 +209,11 @@ const def: TrackDefinition = {
       part("hat", "percussion", hatNotes, { gain: 0.35, pan: 0.3 }),
     ],
   },
-  charts: {},
+  charts: {
+    novice: chart("novice", noviceEvents),
+    apprentice: chart("apprentice", apprenticeEvents),
+    virtuoso: chart("virtuoso", virtuosoEvents),
+  },
 };
 
 export default def;

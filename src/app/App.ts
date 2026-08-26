@@ -475,6 +475,9 @@ export class App implements AppApi {
       this.announce("Audio was interrupted");
     });
     this.engine.events.on("unavailable", () => {
+      // A run that just lost its audio stops at the pause menu rather than
+      // carrying on silently under the player.
+      this.pause();
       this.announce("Audio is unavailable in this browser");
       this.ui.refresh();
     });

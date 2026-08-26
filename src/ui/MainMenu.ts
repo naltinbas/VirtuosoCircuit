@@ -4,7 +4,9 @@ import type { AppApi } from "../app/App";
 import type { PlayMode } from "../app/GameState";
 import { button, el, type Screen } from "./UIManager";
 
-const PREMISE = "You are the signal conductor. Restore the dormant concert hall one performance at a time.";
+/** The one line that opens the game, repeated at the top of the credits. */
+export const PREMISE =
+  "You are the signal conductor. Restore the dormant concert hall one performance at a time.";
 
 export class MainMenu implements Screen {
   readonly element: HTMLElement;

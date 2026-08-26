@@ -1025,3 +1025,45 @@ body.reduced-motion .hud__message.is-flash {
   margin-top: 0.4rem;
   gap: 0.45rem;
 }
+
+/* --------------------------------------------------------------- credits */
+
+.manifest__scroll {
+  overflow-x: auto;
+  margin-top: 0.4rem;
+}
+
+.manifest {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78em;
+  min-width: 46em;
+}
+
+.manifest th,
+.manifest td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid rgba(123, 92, 255, 0.24);
+  text-align: left;
+  vertical-align: top;
+}
+
+.manifest th {
+  color: var(--teal-soft);
+  font-weight: 620;
+  white-space: nowrap;
+}
+
+.manifest td {
+  color: var(--muted);
+}
+
+.manifest td:first-child {
+  color: var(--ivory);
+}
+
+.manifest__note {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--amber);
+}

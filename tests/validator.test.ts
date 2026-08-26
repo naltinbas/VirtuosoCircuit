@@ -21,6 +21,19 @@ describe("compileTrack", () => {
   });
 });
 
+describe("compileTrack chart keys", () => {
+  it("refuses a chart whose label disagrees with the key it sits under", () => {
+    const def = fixtureTrack();
+    def.charts.maestro = chart("virtuoso", lanes(0, "0 1 2 3"));
+    expect(() => compileTrack(def)).toThrow(/maestro/);
+  });
+  it("refuses a difficulty that is not one of the four", () => {
+    const def = fixtureTrack();
+    (def.charts as Record<string, unknown>).expert = { difficulty: "expert", events: [{ beat: 0, lanes: [0] }] };
+    expect(() => compileTrack(def)).toThrow(/expert/);
+  });
+});
+
 describe("validateChart", () => {
   const def = fixtureTrack();
   const track = compileTrack(def);

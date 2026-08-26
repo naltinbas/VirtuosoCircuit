@@ -1,5 +1,6 @@
 import { BeatMapper } from "./BeatMapper";
 import {
+  DIFFICULTIES,
   type BeatChart,
   type ChartEvent,
   type ChartStats,
@@ -134,8 +135,20 @@ export function compileTrack(def: TrackDefinition): TrackChart {
     endMs: mapper.beatToMs(s.endBeat),
   }));
   const charts: Partial<Record<Difficulty, CompiledChart>> = {};
-  for (const bc of Object.values(def.charts)) {
-    if (bc) charts[bc.difficulty] = compileChart(bc, mapper);
+  // The slot a chart lands in comes from its own difficulty field, and nothing
+  // in the type ties that to the key it was written under. A key that disagrees
+  // would drop one chart on top of another and lose a third without a word, and
+  // a difficulty outside the union would get vacuous density limits, so both
+  // are refused here rather than compiled.
+  for (const [key, bc] of Object.entries(def.charts)) {
+    if (!bc) continue;
+    if (!DIFFICULTIES.includes(bc.difficulty)) {
+      throw new Error(`chart "${key}" has unknown difficulty "${bc.difficulty}"`);
+    }
+    if (bc.difficulty !== key) {
+      throw new Error(`chart under key "${key}" is labelled "${bc.difficulty}"`);
+    }
+    charts[bc.difficulty] = compileChart(bc, mapper);
   }
   return {
     metadata: { ...def.metadata, durationMs },

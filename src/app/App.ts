@@ -995,12 +995,17 @@ export class App implements AppApi {
     // The frame reads song time through the same audio mapping the presses in
     // it use, so a gem crossing the gate and a press at that moment agree.
     let songMs = this.clock.songMsAtAudioMs(frameAudioMs);
-    if (session.autoplay) this.stepAutoplay(songMs - judgmentOffsetMs);
-    session.game.update(songMs);
-    this.advance(songMs);
-    // advance() can move the clock: a practice loop re-entry seeks back to the
-    // loop entry and rearms the notes, so the rest of the frame reads it again.
-    songMs = this.clock.songMsAtAudioMs(frameAudioMs);
+    // Only a running run is driven forward, the same rule the lane input
+    // follows. A pause menu, a panel over it or the results screen keeps
+    // rendering the frozen run without judging anything in it.
+    if (GAMEPLAY_STATES.has(this.router.state)) {
+      if (session.autoplay) this.stepAutoplay(songMs - judgmentOffsetMs);
+      session.game.update(songMs);
+      this.advance(songMs);
+      // advance() can move the clock: a practice loop re-entry seeks back to
+      // the loop entry and rearms the notes, so the frame reads it again.
+      songMs = this.clock.songMsAtAudioMs(frameAudioMs);
+    }
 
     const displayMs = songMs - (latencyMs + settings.audioOffsetMs - settings.visualOffsetMs) * rate;
     const frameDeltaMs =

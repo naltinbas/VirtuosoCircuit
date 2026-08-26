@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { JUDGMENT_WINDOWS_MS, type JudgmentWindows } from "../src/app/Config";
+import { HIGHWAY, JUDGMENT_WINDOWS_MS, type JudgmentWindows } from "../src/app/Config";
 import { NoteJudge, isHit } from "../src/gameplay/NoteJudge";
 import { collect, collectNames, gameFor } from "./gamefixtures";
 
@@ -199,6 +199,47 @@ describe("judgment offset", () => {
     expect(game.summary().holdTicks).toBe(5);
     const ends = game.summary();
     expect(ends.earlyReleases).toBe(0);
+  });
+
+  it("stops counting the notes a smaller offset walks past", () => {
+    const game = gameFor([
+      { timeMs: 1000, lanes: [0] },
+      { timeMs: 1200, lanes: [1] },
+      { timeMs: 1400, lanes: [2] },
+    ], { judgmentOffsetMs: 250 });
+    const names = collectNames(game);
+    game.update(1100);
+    expect(names).toEqual([]);
+    // The calibration sliders move while the clock is frozen at a pause, so
+    // the judgment frame jumps forward with no song time behind it.
+    game.setJudgmentOffsetMs(-250);
+    game.update(1100);
+    expect(names).toEqual([]);
+    expect(game.snapshot().misses).toBe(0);
+    expect(game.snapshot().judgedCount).toBe(0);
+    // The note at 1000 has no gate under the new offset, so it stops counting.
+    expect(game.snapshot().totalNotes).toBe(2);
+    expect(game.press(1, 1100)?.judgment).toBe("faint");
+  });
+
+  it("leaves the notes alone when the offset grows", () => {
+    const game = gameFor([{ timeMs: 1000, lanes: [0] }], { judgmentOffsetMs: 0 });
+    game.update(900);
+    game.setJudgmentOffsetMs(400);
+    expect(game.snapshot().totalNotes).toBe(1);
+    expect(game.press(0, 1400)?.judgment).toBe("radiant");
+  });
+
+  it("leaves a finished run untouched", () => {
+    const game = gameFor([
+      { timeMs: 1000, lanes: [0] },
+      { timeMs: 30000, lanes: [1] },
+    ], { durationMs: 2000 });
+    game.press(0, 1000);
+    game.update(2000 + HIGHWAY.outroMs);
+    const before = game.summary();
+    game.setJudgmentOffsetMs(-1000);
+    expect(game.summary()).toEqual(before);
   });
 
   it("takes a new offset mid run", () => {

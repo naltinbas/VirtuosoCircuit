@@ -211,7 +211,13 @@ export class RhythmGame {
   }
 
   setJudgmentOffsetMs(ms: number): void {
+    const previous = this.offsetMs;
     this.offsetMs = ms;
+    if (ms >= previous || this.finishedFlag || this.lastUpdateSongMs === null) return;
+    // A smaller offset moves the judgment frame forward with no song time
+    // behind it, over notes that have no gate under the new frame. They stop
+    // counting instead of turning into misses the player could not have hit.
+    this.skipBefore(this.lastUpdateSongMs - ms - this.judge.missWindowMs);
   }
 
   update(songMs: number): void {

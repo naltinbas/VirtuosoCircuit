@@ -24,6 +24,11 @@ import {
 
 const VOLUME_STEP = 0.05;
 
+/** The settings a checkbox can drive, so a toggle row cannot name a slider. */
+type BooleanSetting = {
+  [K in keyof Settings]: Settings[K] extends boolean ? K : never;
+}[keyof Settings];
+
 function percent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
@@ -41,7 +46,7 @@ export class SettingsPanel implements Screen {
   private readonly effects: SliderField;
   private readonly approach: SliderField;
   private readonly textScale: SliderField;
-  private readonly toggles: { key: keyof Settings; field: ToggleField }[] = [];
+  private readonly toggles: { key: BooleanSetting; field: ToggleField }[] = [];
   private readonly bindingsValue = el("span", { className: "field__value field__value--wide" });
   private readonly calibrationValue = el("span", { className: "field__value field__value--wide" });
   private readonly fullscreenButton: HTMLButtonElement;
@@ -187,7 +192,7 @@ export class SettingsPanel implements Screen {
     this.effects.set(s.effectsVolume);
     this.approach.set(s.approachMs);
     this.textScale.set(s.textScale);
-    for (const entry of this.toggles) entry.field.set(s[entry.key] === true);
+    for (const entry of this.toggles) entry.field.set(s[entry.key]);
     this.bindingsValue.textContent = s.keyBindings.map((code) => keyLabel(code)).join(", ");
     this.calibrationValue.textContent = `Audio ${s.audioOffsetMs} ms, visual ${s.visualOffsetMs} ms, input ${s.inputOffsetMs} ms`;
     this.fullscreenButton.textContent = document.fullscreenElement ? "Leave fullscreen" : "Enter fullscreen";
@@ -198,12 +203,12 @@ export class SettingsPanel implements Screen {
     this.storageNote.hidden = notes.length === 0;
   }
 
-  private toggle(key: keyof Settings, label: string, note?: string): HTMLElement {
+  private toggle(key: BooleanSetting, label: string, note?: string): HTMLElement {
     const entry = toggleField({
       label,
       note,
-      checked: this.app.settings.current[key] === true,
-      onChange: (checked) => this.app.settings.save({ [key]: checked } as Partial<Settings>),
+      checked: this.app.settings.current[key],
+      onChange: (checked) => this.app.settings.save({ [key]: checked }),
     });
     this.toggles.push({ key, field: entry });
     return entry.element;

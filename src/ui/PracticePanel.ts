@@ -7,7 +7,7 @@
 
 import type { AppApi } from "../app/App";
 import { PRACTICE_SPEEDS } from "../app/Config";
-import type { BeatMark, Section, TrackChart } from "../charts/ChartTypes";
+import type { Section, TrackChart } from "../charts/ChartTypes";
 import { formatClock } from "../utils/TimeUtils";
 import {
   button,
@@ -29,7 +29,7 @@ interface Measure {
 
 function measuresOf(track: TrackChart): Measure[] {
   const out: Measure[] = [];
-  for (const mark of track.beatGrid as readonly BeatMark[]) {
+  for (const mark of track.beatGrid) {
     if (mark.isDownbeat && mark.timeMs <= track.metadata.durationMs) {
       out.push({ number: mark.measure, timeMs: mark.timeMs });
     }

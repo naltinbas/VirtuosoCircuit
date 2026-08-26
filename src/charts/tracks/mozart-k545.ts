@@ -3,8 +3,8 @@
 // Condensed from the exposition. The opening theme is stated as written and
 // echoed an octave higher, the sixteenth note transition is reduced to its
 // scale shapes, the theme is restated in the dominant, then the whole opening
-// group returns in C and the piece closes with cadential scales, two neighbour
-// note trills and a plain V7 to I.
+// group returns in C and the piece closes with cadential scales, three
+// neighbour note trills and a plain V7 to I.
 //
 // Form: theme, running scales, dominant strain, return, closing scales, coda.
 // 44 bars of 4/4 at 120 bpm, about 88 seconds.
@@ -25,7 +25,7 @@ import type { ArrangementNote, BeatEvent, TrackDefinition } from "../ChartTypes"
 const BAR = 4;
 
 // One bar of harmony per entry, bars 1 to 44. A hyphen splits the bar into two
-// half bars, which is how the two cadences change chord mid bar.
+// half bars, which is how bars 12 and 41 change chord halfway through.
 const HARMONY: readonly string[] = [
   "c", "g7", "c", "g7",
   "c", "g7", "c", "g",

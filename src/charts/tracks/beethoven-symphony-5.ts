@@ -2,16 +2,17 @@
 //
 // The excerpt keeps the four note motif with both of its fermatas, the
 // imitative string entries that grow out of it, the tutti restatement, the
-// horn call that opens the E flat side of the exposition, and a hammered C
-// minor cadence. The development and the recapitulation are cut and every
-// sequence is shortened to two bars a step, so the whole excerpt runs about
-// eighty eight seconds.
+// horn call that opens the E flat side of the exposition, and a coda that
+// drives through a circle of fifths into a hammered C minor cadence. The
+// development and the recapitulation are cut and every sequence is shortened
+// to two bars a step, so the whole excerpt runs about ninety seconds.
 //
 // Form: opening motif, string entries, tutti restatement, horn call and E flat
 // episode, return of the motif, coda. 2/4 with the quarter as the beat at 208,
-// and the tempo map drops to 70 and 60 for the two fermata bars, to 76 for the
-// dominant fermata that closes the string entries, to 88 for the pause before
-// the horn call and to 96 for the last cadence.
+// and the tempo map drops to 70 and 40 for the two fermata bars, the second of
+// which the score holds about twice as long as the first, to 76 for the two
+// dominant fermatas that close the string entries and the return, to 88 for
+// the pause before the horn call and to 96 for the last cadence.
 
 import { chart, join, lanes, melody, part, phrase, shiftEvents, shiftNotes, trill } from "../Authoring";
 import type { ArrangementNote, BeatEvent, TrackDefinition } from "../ChartTypes";
@@ -21,8 +22,11 @@ import type { ArrangementNote, BeatEvent, TrackDefinition } from "../ChartTypes"
 // ---------------------------------------------------------------------------
 
 /**
- * The motif: an eighth rest, three repeated eighths, then a longer note a
- * third below. Both pitch arguments take chords written with "+".
+ * The motif: an eighth rest, three repeated eighths, then a longer note
+ * under them, a third below except where the harmony wants the dominant.
+ * Both pitch arguments take chords written with "+". Pass 0.5 for longBeats
+ * where the next figure begins two beats later on a note a semitone away: the
+ * resolution then stops before it instead of rubbing against it.
  */
 function figure(
   startBeat: number,
@@ -89,10 +93,10 @@ const descent = join(
   figure(48, "Eb5", "C5", 1, 0.95),
   figure(50, "D5", "Bb4", 1, 0.95),
   figure(52, "C5", "Ab4", 1, 0.95),
-  figure(54, "Bb4", "G4", 1, 0.95),
+  figure(54, "Bb4", "G4", 0.5, 0.95),
   figure(56, "Ab4", "F4", 1, 0.9),
   figure(58, "G4", "Eb4", 1, 0.9),
-  figure(60, "F4", "D4", 1, 0.9),
+  figure(60, "F4", "D4", 0.5, 0.9),
   figure(62, "Eb4", "C4", 1, 0.9),
 );
 const ascent = join(
@@ -103,13 +107,13 @@ const ascent = join(
   figure(72, "D5", "Bb4", 1, 0.93),
   figure(74, "Eb5", "C5", 1, 0.95),
   figure(76, "F5", "D5", 1, 0.97),
-  figure(78, "G5", "Eb5", 1, 1),
+  figure(78, "G5", "Eb5", 0.5, 1),
 );
 const hammer = join(
-  figure(80, "C5+Eb5", "G4+C5", 1, 1),
-  figure(82, "B4+D5", "G4+B4", 1, 1),
-  figure(84, "C5+Eb5", "G4+C5", 1, 1),
-  figure(86, "B4+D5", "G4+B4", 1, 1),
+  figure(80, "C5+Eb5", "G4+C5", 0.5, 1),
+  figure(82, "B4+D5", "G4+B4", 0.5, 1),
+  figure(84, "C5+Eb5", "G4+C5", 0.5, 1),
+  figure(86, "B4+D5", "G4+B4", 0.5, 1),
 );
 // The dominant seventh of E flat, climbing into the pause before the horns.
 const toEflat = join(
@@ -127,21 +131,40 @@ const ebMelody = join(
 // Back to C minor through the dominant seventh.
 const buildBack = join(
   figure(136, "D5", "B4", 1, 0.85),
-  figure(138, "F5", "D5", 1, 0.88),
+  figure(138, "F5", "D5", 0.5, 0.88),
   figure(140, "Eb5", "C5", 1, 0.91),
   figure(142, "D5", "B4", 1, 0.94),
   figure(144, "G5", "Eb5", 1, 0.96),
   figure(146, "Ab5", "F5", 1, 0.98),
-  figure(148, "G5", "Eb5", 1, 1),
+  // Resolve onto the dominant so the long note doubles the hammered D5.
+  figure(148, "G5", "D5", 1, 1),
   repeat(150, "D5", 4, 0.5, 1),
 );
 
 const returnTheme = join(figure(152, "G5", "Eb5", 2, 1), figure(156, "F5", "D5", 2, 1));
 const returnClose = join(repeat(212, "D5", 4, 0.5, 1), row(214, ["G3+B3+D4+G4"], 2, 0.95));
 const codaTheme = join(figure(232, "G5", "Eb5", 2, 1), figure(236, "F5", "D5", 2, 1));
+// The coda drive. A bar of running eighths per chord around a circle of
+// fifths, the same chords again as rising arpeggios, then a scale over the
+// dominant and the dominant seventh held into the cadence.
+const codaRun = melody(
+  240,
+  "C5/0.5 D5 Eb5 G5 | F5 Eb5 C5 Ab4 | Bb4 C5 D5 F5 | Eb5 D5 Bb4 G4" +
+    " | Ab4 Bb4 C5 Eb5 | D5 C5 Ab4 F4 | G4 Ab4 B4 D5 | Eb5 D5 C5 Bb4",
+  0.9,
+).notes;
+const codaRocket = melody(
+  256,
+  "G4/0.5 C5 Eb5 G5 | Ab4 C5 Eb5 Ab5 | F4 Ab4 C5 F5 | G4 B4 D5 F5",
+  0.95,
+).notes;
+const codaClimb = join(
+  melody(264, "G4/0.5 Ab4 B4 C5 | D5 Eb5 F5 G5 | Ab5 G5 F5 D5", 1).notes,
+  row(270, ["G4+B4+D5+F5"], 2, 1),
+);
 const cadence = join(
-  figure(272, "D5+F5", "B4+D5", 1, 1),
-  figure(274, "Eb5+G5", "C5+Eb5", 1, 1),
+  figure(272, "D5+F5", "B4+D5", 0.5, 1),
+  figure(274, "Eb5+G5", "C5+Eb5", 0.5, 1),
   figure(276, "D5+F5", "B4+D5", 1, 1),
   repeat(278, "D5", 4, 0.5, 1),
   figure(280, "G4+G5", "C4+Eb4+G4+C5", 2, 1),
@@ -171,8 +194,9 @@ const stringNotes = join(
   shiftNotes(hammer, 136),
   shiftNotes(hammer, 144),
   codaTheme,
-  shiftNotes(descent, 192),
-  shiftNotes(ascent, 192),
+  codaRun,
+  codaRocket,
+  codaClimb,
   cadence,
 );
 
@@ -210,6 +234,30 @@ const padEflat = row(
   4,
   0.4,
 );
+// One chord a bar under the coda drive, ending on the dominant for the climb.
+const padCoda = row(
+  240,
+  [
+    "C3+Eb3+G3",
+    "F2+Ab2+C3",
+    "Bb2+D3+F3",
+    "Eb3+G3+Bb3",
+    "Ab2+C3+Eb3",
+    "D3+F3+Ab3",
+    "G2+B2+D3",
+    "C3+Eb3+G3",
+    "C3+Eb3+G3",
+    "Ab2+C3+Eb3",
+    "F2+Ab2+C3",
+    "G2+B2+D3",
+    "G2+B2+D3",
+    "G2+B2+D3",
+    "G2+B2+D3",
+    "G2+B2+D3",
+  ],
+  2,
+  0.5,
+);
 const padBuild = row(
   136,
   ["G2+B2+D3", "G2+B2+D3", "Ab2+C3+Eb3", "G2+B2+D3", "C3+Eb3+G3", "D3+F3+Ab3", "C3+Eb3+G3", "G2+B2+D3"],
@@ -224,14 +272,18 @@ const organNotes = join(
   padDescent,
   padAscent,
   padHammer,
-  row(88, ["Bb2+D3+F3"], 6, 0.5),
+  // G major runs through beat 88: the hammer is still sounding its B natural
+  // there, so the B flat seventh of E flat waits for the next bar.
+  row(88, ["G2+B2+D3"], 1, 0.5),
+  row(89, ["Bb2+D3+F3"], 5, 0.5),
   row(94, ["Bb2+D3+F3+Ab3"], 2, 0.6),
   hornCall,
   padEflat,
   padBuild,
   figure(152, "G4", "Eb4", 2, 0.95),
   figure(156, "F4", "D4", 2, 0.95),
-  row(160, ["G2+B2+D3", "Ab2+C3+Eb3", "G2+B2+D3"], 4, 0.5),
+  // Minor first: the returning entries put B flat over this bar.
+  row(160, ["G2+Bb2+D3", "Ab2+C3+Eb3", "G2+B2+D3"], 4, 0.5),
   shiftNotes(padDescent, 124),
   shiftNotes(padAscent, 124),
   shiftNotes(padHammer, 124),
@@ -240,8 +292,7 @@ const organNotes = join(
   shiftNotes(padHammer, 144),
   figure(232, "G4", "Eb4", 2, 0.95),
   figure(236, "F4", "D4", 2, 0.95),
-  shiftNotes(padDescent, 192),
-  shiftNotes(padAscent, 192),
+  padCoda,
   row(272, ["G2+B2+D3", "C3+Eb3+G3", "G2+B2+D3", "G2+B2+D3"], 2, 0.7),
   row(282, ["C2+C3+Eb3+G3"], 2, 1),
 );
@@ -282,6 +333,13 @@ const bassEflat = join(
   figure(132, "Bb2", "G2", 2, 0.72),
 );
 
+const bassCoda = join(
+  row(240, ["C2", "C2", "F2", "F2", "Bb2", "Bb2", "Eb2", "Eb2"], 1, 0.75),
+  row(248, ["Ab2", "Ab2", "D2", "D2", "G2", "G2", "C2", "C2"], 1, 0.75),
+  row(256, ["C2", "C2", "Ab2", "Ab2", "F2", "F2", "G2", "G2"], 1, 0.75),
+  repeat(264, "G2", 8, 1, 0.8),
+);
+
 const bassNotes = join(
   bassOpening,
   bassEntries,
@@ -293,7 +351,9 @@ const bassNotes = join(
   bassDescent,
   bassAscent,
   bassHammer,
-  repeat(88, "Bb2", 6, 1, 0.75),
+  row(88, ["G2"], 1, 0.75),
+  // With the organ: the B flat side starts a bar late.
+  repeat(89, "Bb2", 5, 1, 0.75),
   row(94, ["Bb2"], 2, 0.8),
   row(96, ["Eb2", "Bb2", "Eb2", "Bb2"], 2, 0.7),
   bassEflat,
@@ -315,8 +375,7 @@ const bassNotes = join(
   shiftNotes(bassHammer, 144),
   figure(232, "G2", "Eb2", 2, 0.95),
   figure(236, "F2", "D2", 2, 0.95),
-  shiftNotes(bassDescent, 192),
-  shiftNotes(bassAscent, 192),
+  bassCoda,
   row(272, ["G2", "G2", "C2", "C2", "G2", "G2"], 1, 0.8),
   repeat(278, "G2", 4, 0.5, 0.9),
   figure(280, "G2", "C2", 2, 1),
@@ -360,7 +419,9 @@ const drumNotes = join(
   row(234, ["cr"], 2, 0.6),
   drumFigure(236, 0.6),
   row(238, ["cr"], 2, 0.6),
-  repeat(240, "k", 16, 2, 0.55),
+  repeat(240, "k", 12, 2, 0.55),
+  repeat(264, "k", 8, 1, 0.6),
+  row(270, ["cr"], 2, 0.7),
   repeat(272, "k", 6, 1, 0.6),
   repeat(278, "t", 4, 0.5, 0.6),
   drumFigure(280, 0.7),
@@ -388,8 +449,10 @@ function pace(id: string, startBeat: number, stepBeats: number, tokens: readonly
 // Lane plan. Lanes 0 to 2 are the left hand, 3 and 4 the right. The motif
 // keeps its three repeated notes in one lane wherever the difficulty allows
 // and steps down a lane for the long note, so the falling third is visible.
-// Sequences that climb move up the lanes and the imitation between the upper
-// and lower strings alternates hands.
+// Sequences that climb keep that falling step and start each figure a lane
+// higher than the last, and the imitation between the upper and lower strings
+// alternates hands. A figure's long note never shares a lane with the repeated
+// notes that follow it half a beat later.
 
 // ---------------------------------------------------------------------------
 // Novice: the pickup eighth and the long note of every figure
@@ -405,6 +468,17 @@ const nAscent = [
   ...pace("n-c5", 74, 2, ["3", "3", "4", "4"]),
 ];
 const nHammer = pace("n-c6", 82, 2, ["[2,4]!", "3", "[2,4]!", "3"]);
+// The coda drive: one press a bar through the run, then the climb.
+const nCoda = [
+  ...pace("n-g1", 240, 2, ["3", "4", "2", "4"]),
+  ...pace("n-g2", 248, 2, ["1", "3", "1", "4"]),
+  ...pace("n-g3", 256, 1.5, ["1", "4"]),
+  ...pace("n-g3", 259.5, 2, ["4", "3"]),
+  ...pace("n-g3", 263, 1, ["2"]),
+  ...pace("n-g4", 264, 1.5, ["1", "2"]),
+  ...pace("n-g4", 267, 1, ["3", "4"]),
+  ...pace("n-g4", 270, 2, ["4h!/2"]),
+];
 
 const noviceChart = chart(
   "novice",
@@ -440,8 +514,7 @@ const noviceChart = chart(
   pace("n-f1", 218, 2, ["[2,4]!", "3", "[2,4]!", "3", "[2,4]!", "3", "[2,4]!"]),
   pace("n-f2", 232.5, 1.5, ["4", "3h/1.5"]),
   pace("n-f2", 236.5, 1.5, ["3", "2h/1.5"]),
-  shiftEvents(nDescent, 192, "-c"),
-  shiftEvents(nAscent, 192, "-c"),
+  nCoda,
   pace("n-f3", 274, 2, ["[2,4]!", "3", "[2,4]!"]),
   pace("n-f3", 280.5, 1.5, ["3", "2h!/1.5"]),
 );
@@ -467,21 +540,31 @@ const aDescent = [
   ...pace("a-c5", 56.5, 1.5, ["2", "1"]),
   ...pace("a-c5", 58.5, 1.5, ["2", "0"]),
   ...pace("a-c6", 60.5, 1.5, ["1", "0"]),
-  ...pace("a-c6", 62.5, 1.5, ["1", "1"]),
+  ...pace("a-c6", 62.5, 1.5, ["1", "0"]),
 ];
 const aAscent = [
-  ...pace("a-c7", 64.5, 1.5, ["0", "1"]),
-  ...pace("a-c7", 66.5, 1.5, ["0", "2"]),
-  ...pace("a-c8", 68.5, 1.5, ["1", "2"]),
-  ...pace("a-c8", 70.5, 1.5, ["1", "3"]),
-  ...pace("a-c9", 72.5, 1.5, ["2", "3"]),
-  ...pace("a-c9", 74.5, 1.5, ["2", "4"]),
-  ...pace("a-c10", 76.5, 1.5, ["3", "4"]),
-  ...pace("a-c10", 78.5, 1.5, ["3", "4"]),
+  ...pace("a-c7", 64.5, 1.5, ["1", "0"]),
+  ...pace("a-c7", 66.5, 1.5, ["2", "1"]),
+  ...pace("a-c8", 68.5, 1.5, ["2", "1"]),
+  ...pace("a-c8", 70.5, 1.5, ["3", "2"]),
+  ...pace("a-c9", 72.5, 1.5, ["3", "2"]),
+  ...pace("a-c9", 74.5, 1.5, ["4", "3"]),
+  ...pace("a-c10", 76.5, 1.5, ["4", "3"]),
+  ...pace("a-c10", 78.5, 1.5, ["4", "3"]),
 ];
 const aHammer = [
-  ...pace("a-c11", 80.5, 1.5, ["3", "[2,4]!"]),
+  ...pace("a-c11", 80.5, 1.5, ["4", "[2,4]!"]),
   ...pace("a-c11", 84, 2, ["3", "[2,4]!", "3"]),
+];
+
+// The coda drive on the beat, with the arpeggio peaks off it.
+const aCoda = [
+  ...pace("a-g1", 240, 1, ["2", "3", "3", "2", "1", "2", "3", "1"]),
+  ...pace("a-g2", 248, 1, ["0", "2", "2", "0", "0", "1", "3", "2"]),
+  ...pace("a-g3", 256, 2, ["1", "1", "1", "1"]),
+  ...pace("a-g3", 257.5, 2, ["4", "4", "3", "3"]),
+  ...pace("a-g4", 264, 1, ["0", "1", "2", "3", "4", "3"]),
+  ...pace("a-g4", 270, 2, ["4h!/2"]),
 ];
 
 const apprenticeChart = chart(
@@ -533,8 +616,7 @@ const apprenticeChart = chart(
   pace("a-f2", 226, 2, ["[2,4]!", "3", "[2,4]!"]),
   phrase("a-f3", 232.5, "4/0.5 3 4 3h/1.25"),
   phrase("a-f4", 236.5, "3/0.5 2 3 2h/1.25"),
-  shiftEvents(aDescent, 192, "-c"),
-  shiftEvents(aAscent, 192, "-c"),
+  aCoda,
   pace("a-f5", 272.5, 1.5, ["3", "[2,4]!"]),
   pace("a-f5", 276, 2, ["[1,3]!", "3!"]),
   pace("a-f5", 279, 1, ["4"]),
@@ -556,28 +638,38 @@ const vTrade = [
 ];
 const vDescent = [
   ...phrase("v-c3", 48.5, "4/0.5 4 4 3"),
-  ...pace("v-c3", 52, 1, ["3"]),
+  ...pace("v-c3", 52, 1, ["2"]),
   ...phrase("v-c4", 52.5, "3/0.5 3 3 2"),
-  ...pace("v-c4", 56, 1, ["2"]),
+  ...pace("v-c4", 56, 1, ["1"]),
   ...phrase("v-c5", 56.5, "2/0.5 2 2 1"),
-  ...pace("v-c5", 60, 1, ["1"]),
+  ...pace("v-c5", 60, 1, ["0"]),
   ...phrase("v-c6", 60.5, "1/0.5 1 1 0"),
   ...pace("v-c6", 64, 1, ["0"]),
 ];
 const vAscent = [
-  ...phrase("v-c7", 64.5, "0/0.5 0 0 1"),
+  ...phrase("v-c7", 64.5, "1/0.5 1 1 0"),
   ...pace("v-c7", 68, 1, ["1"]),
-  ...phrase("v-c8", 68.5, "1/0.5 1 1 2"),
+  ...phrase("v-c8", 68.5, "2/0.5 2 2 1"),
   ...pace("v-c8", 72, 1, ["2"]),
-  ...phrase("v-c9", 72.5, "2/0.5 2 2 3"),
+  ...phrase("v-c9", 72.5, "3/0.5 3 3 2"),
   ...pace("v-c9", 76, 1, ["3"]),
-  ...phrase("v-c10", 76.5, "3/0.5 3 3 4"),
-  ...pace("v-c10", 80, 1, ["4"]),
+  ...phrase("v-c10", 76.5, "4/0.5 4 4 3"),
+  ...pace("v-c10", 80, 1, ["3"]),
 ];
 const vHammer = [
-  ...phrase("v-c11", 80.5, "4/0.5 4 4 [2,4]!"),
+  ...phrase("v-c11", 80.5, "4/0.5 4 4 [1,3]!"),
   ...pace("v-c11", 84, 1, ["3!"]),
-  ...phrase("v-c12", 84.5, "4/0.5 4 4 [2,4]!"),
+  ...phrase("v-c12", 84.5, "4/0.5 4 4 [1,3]!"),
+];
+
+// The coda run streamed in eighths, the arpeggios as a low and high pair a bar.
+const vCoda = [
+  ...phrase("v-g1", 240, "1/0.5 2 3 4 | 3 2 1 0 | 1 2 3 4 | 3 2 1 0"),
+  ...phrase("v-g2", 248, "1/0.5 2 3 4 | 3 2 1 0 | 1 2 3 4 | 3 2 1 0"),
+  ...pace("v-g3", 256, 2, ["1", "1", "1", "1"]),
+  ...pace("v-g3", 257.5, 2, ["4", "4", "3", "3"]),
+  ...phrase("v-g4", 264, "0/0.5 1 2 3 | 0 1 2 3 | 4! 3 2 1"),
+  ...pace("v-g4", 270, 2, ["4h!/2"]),
 ];
 
 const virtuosoChart = chart(
@@ -602,7 +694,7 @@ const virtuosoChart = chart(
   pace("v-c12", 88, 1, ["3!"]),
   phrase("v-c13", 88.5, "4/0.5 4 4 3"),
   pace("v-c13", 92, 1, ["3"]),
-  phrase("v-c14", 92.5, "4/0.5 4 4 [0,4]!"),
+  phrase("v-c14", 92.5, "4/0.5 4 4 [0,3]!"),
   phrase("v-d1", 96.5, "1/0.5 1 1 2h/1.5"),
   phrase("v-d2", 100.5, "3/0.5 3 3 4h/1.5"),
   pace("v-d3", 104, 0.5, ["1h/1.5", "0", "0", "0"]),
@@ -616,7 +708,7 @@ const virtuosoChart = chart(
   pace("v-d7", 128, 2, ["3h/1.5", "2"]),
   pace("v-d8", 131, 1, ["2", "1", "2", "1h/1.5"]),
   phrase("v-d9", 136.5, "3/0.5 3 3 2"),
-  pace("v-d9", 140, 1, ["3"]),
+  pace("v-d9", 140, 1, ["4"]),
   phrase("v-d10", 140.5, "3/0.5 3 3 2"),
   pace("v-d10", 144, 1, ["2"]),
   phrase("v-d11", 144.5, "4/0.5 4 4 3"),
@@ -636,8 +728,7 @@ const virtuosoChart = chart(
   lanes(232, "3!"),
   phrase("v-f1", 232.5, "4/0.5 4 4 3h/1.5"),
   phrase("v-f2", 236.5, "3/0.5 3 3 2h/1.5"),
-  shiftEvents(vDescent, 192, "-c"),
-  shiftEvents(vAscent, 192, "-c"),
+  vCoda,
   phrase("v-f3", 272.5, "4/0.5 4 4 [1,3]!"),
   pace("v-f3", 276, 1, ["[2,4]!"]),
   trill("v-f4", 278, "3/0.5 4 3 4"),
@@ -659,28 +750,37 @@ const mTrade = [
 ];
 const mDescent = [
   ...phrase("m-c3", 48.5, "4/0.5 4 4 3"),
-  ...phrase("m-c3", 50.5, "4/0.5 4 4 3"),
+  ...phrase("m-c3", 50.5, "4/0.5 4 4 2"),
   ...phrase("m-c4", 52.5, "3/0.5 3 3 2"),
-  ...phrase("m-c4", 54.5, "3/0.5 3 3 2"),
+  ...phrase("m-c4", 54.5, "3/0.5 3 3 1"),
   ...phrase("m-c5", 56.5, "2/0.5 2 2 1"),
-  ...phrase("m-c5", 58.5, "2/0.5 2 2 1"),
+  ...phrase("m-c5", 58.5, "2/0.5 2 2 0"),
   ...phrase("m-c6", 60.5, "1/0.5 1 1 0"),
   ...phrase("m-c6", 62.5, "1/0.5 1 1 0"),
 ];
 const mAscent = [
-  ...phrase("m-c7", 64.5, "0/0.5 0 0 1"),
-  ...phrase("m-c7", 66.5, "0/0.5 0 0 1"),
-  ...phrase("m-c8", 68.5, "1/0.5 1 1 2"),
-  ...phrase("m-c8", 70.5, "1/0.5 1 1 2"),
-  ...phrase("m-c9", 72.5, "2/0.5 2 2 3"),
-  ...phrase("m-c9", 74.5, "2/0.5 2 2 3"),
-  ...phrase("m-c10", 76.5, "3/0.5 3 3 4"),
-  ...phrase("m-c10", 78.5, "3/0.5 3 3 4"),
+  ...phrase("m-c7", 64.5, "1/0.5 1 1 0"),
+  ...phrase("m-c7", 66.5, "2/0.5 2 2 1"),
+  ...phrase("m-c8", 68.5, "2/0.5 2 2 1"),
+  ...phrase("m-c8", 70.5, "3/0.5 3 3 2"),
+  ...phrase("m-c9", 72.5, "3/0.5 3 3 2"),
+  ...phrase("m-c9", 74.5, "4/0.5 4 4 3"),
+  ...phrase("m-c10", 76.5, "4/0.5 4 4 3"),
+  ...phrase("m-c10", 78.5, "4/0.5 4 4 3"),
 ];
 const mHammer = [
-  ...phrase("m-c11", 80.5, "4/0.5 4 4 [2,4]!"),
+  ...phrase("m-c11", 80.5, "4/0.5 4 4 [1,3]!"),
   ...pace("m-c11", 84, 1, ["3!"]),
-  ...phrase("m-c12", 84.5, "4/0.5 4 4 [2,4]!"),
+  ...phrase("m-c12", 84.5, "4/0.5 4 4 [1,3]!"),
+];
+
+// Every eighth of the coda drive, arpeggios included.
+const mCoda = [
+  ...phrase("m-g1", 240, "1/0.5 2 3 4 | 3 2 1 0 | 1 2 3 4 | 3 2 1 0"),
+  ...phrase("m-g2", 248, "1/0.5 2 3 4 | 3 2 1 0 | 1 2 3 4 | 3 2 1 0"),
+  ...phrase("m-g3", 256, "1/0.5 2 3 4 | 1 2 3 4 | 0 1 2 3 | 1 2 3 4"),
+  ...phrase("m-g4", 264, "0/0.5 1 2 3 | 0 1 2 3 | 4! 3 2 1"),
+  ...pace("m-g4", 270, 2, ["4h!/2"]),
 ];
 
 const maestroChart = chart(
@@ -702,7 +802,7 @@ const maestroChart = chart(
   pace("m-c12", 88, 1, ["3!"]),
   phrase("m-c13", 88.5, "4/0.5 4 4 3"),
   phrase("m-c13", 90.5, "4/0.5 4 4 3"),
-  phrase("m-c14", 92.5, "4/0.5 4 4 [0,4]!"),
+  phrase("m-c14", 92.5, "4/0.5 4 4 [0,3]!"),
   phrase("m-d1", 96.5, "1/0.5 [0,1]! 1 2h/1.5"),
   phrase("m-d2", 100.5, "3/0.5 [0,3]! 3 4h/1.5"),
   pace("m-d3", 104, 0.5, ["1h/1.5", "0", "0", "0"]),
@@ -717,7 +817,7 @@ const maestroChart = chart(
   pace("m-d8", 128, 0.5, ["3h/1.5", "0", "0", "0"]),
   pace("m-d9", 130, 1, ["2", "2", "1", "2", "1h/1.5"]),
   phrase("m-d10", 136.5, "3/0.5 3 3 2"),
-  phrase("m-d10", 138.5, "4/0.5 4 4 3"),
+  phrase("m-d10", 138.5, "4/0.5 4 4 2"),
   phrase("m-d11", 140.5, "3/0.5 3 3 2"),
   phrase("m-d11", 142.5, "3/0.5 3 3 2"),
   phrase("m-d12", 144.5, "4/0.5 4 4 3"),
@@ -738,10 +838,9 @@ const maestroChart = chart(
   lanes(232, "3!"),
   phrase("m-f1", 232.5, "4/0.5 [0,4]! 4 3h/1.5"),
   phrase("m-f2", 236.5, "3/0.5 [0,3]! 3 2h/1.5"),
-  shiftEvents(mDescent, 192, "-c"),
-  shiftEvents(mAscent, 192, "-c"),
+  mCoda,
   phrase("m-f3", 272.5, "4/0.5 4 4 [1,3]!"),
-  pace("m-f3", 276, 1, ["[2,4]!"]),
+  pace("m-f3", 276, 1, ["[0,2]!"]),
   phrase("m-f4", 276.5, "4/0.5 4 4"),
   trill("m-f5", 278, "3/0.5 4 3 4"),
   phrase("m-f6", 280.5, "4/0.5 4 4 [0,2,4]!"),
@@ -765,19 +864,21 @@ const def: TrackDefinition = {
     scoreSourceCredit:
       "Condensed from the first movement as the arranger knows the published score; the note data was written by hand for this project and no external MIDI file, printed edition or recording was used",
     licenseNotes:
-      "The composition is in the public domain. The arrangement and the charts are an original arrangement written for this game.",
+      "The composition is in the public domain. The note data and the charts in this file are an original arrangement written for this game and are covered by the project license.",
     unlockAfter: "mozart-symphony-40",
   },
   tempoMap: [
     { beat: 0, bpm: 208 },
     { beat: 2, bpm: 70 },
     { beat: 4, bpm: 208 },
-    { beat: 6, bpm: 60 },
+    { beat: 6, bpm: 40 },
     { beat: 8, bpm: 208 },
     { beat: 38, bpm: 76 },
     { beat: 40, bpm: 208 },
     { beat: 94, bpm: 88 },
     { beat: 96, bpm: 208 },
+    { beat: 214, bpm: 76 },
+    { beat: 216, bpm: 208 },
     { beat: 280, bpm: 96 },
   ],
   sections: [

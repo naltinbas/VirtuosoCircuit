@@ -778,8 +778,11 @@ body {
   border: 1px solid var(--edge);
   border-radius: 8px;
   color: var(--teal-soft);
-  font-size: 0.78em;
+  /* Sized like the rest of the HUD, which it no longer sits inside. */
+  font-size: calc(15px * var(--text-scale) * 0.78);
   font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 4;
 }
 
 .hud__perf[hidden] {

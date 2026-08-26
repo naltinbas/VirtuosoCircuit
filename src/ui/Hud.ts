@@ -52,6 +52,8 @@ function write(target: Readout, text: string): void {
 
 export class Hud {
   readonly element: HTMLElement;
+  /** The F1 readout, mounted outside the HUD so it shows on menus too. */
+  readonly perfElement = el("div", { className: "hud__perf" });
 
   private readonly app: AppApi;
   private readonly titleEl = el("span", { className: "hud__title" });
@@ -67,7 +69,6 @@ export class Hud {
   private readonly bannerEl = el("div", { className: "hud__banner" });
   private readonly messageEl = el("div", { className: "hud__message" });
   private readonly beatEl = el("div", { className: "hud__beat" });
-  private readonly perfEl = el("div", { className: "hud__perf" });
   private readonly pauseButton: HTMLButtonElement;
 
   private readonly score = readout("Score", "hud__stat--score");
@@ -126,8 +127,8 @@ export class Hud {
     const bottom = el("div", { className: "hud__bottom" });
     bottom.append(aura, this.judgmentEl, this.beatEl);
 
-    this.perfEl.hidden = true;
-    this.element.append(top, center, bottom, this.perfEl);
+    this.perfElement.hidden = true;
+    this.element.append(top, center, bottom);
   }
 
   setTrack(track: TrackChart | null, difficulty: Difficulty | null, mode: PlayMode | null): void {
@@ -193,19 +194,19 @@ export class Hud {
   }
 
   setPerfVisible(visible: boolean): void {
-    this.perfEl.hidden = !visible;
+    this.perfElement.hidden = !visible;
     if (!visible) this.lastPerf = "";
   }
 
   get perfVisible(): boolean {
-    return !this.perfEl.hidden;
+    return !this.perfElement.hidden;
   }
 
   updatePerf(fps: number, frameMs: number, notes: number, particles: number): void {
     const text = `${Math.round(fps)} fps, ${frameMs.toFixed(1)} ms, ${notes} notes, ${particles} sparks`;
     if (text === this.lastPerf) return;
     this.lastPerf = text;
-    this.perfEl.textContent = text;
+    this.perfElement.textContent = text;
   }
 
   update(snapshot: GameSnapshot, songMs: number): void {

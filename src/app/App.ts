@@ -440,6 +440,9 @@ export class App implements AppApi {
     );
     this.hud = new Hud(this);
     root.insertBefore(this.hud.element, uiRoot);
+    // The performance readout works in every state, so it sits outside the HUD,
+    // which is hidden on the menus.
+    root.append(this.hud.perfElement);
 
     this.ready = new Promise<void>((resolve) => {
       this.resolveReady = resolve;

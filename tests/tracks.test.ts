@@ -108,3 +108,19 @@ describe("catalog credits", () => {
     }
   });
 });
+
+// The catalog is tiered: the first three tracks are novice, the next three
+// apprentice, then virtuoso, and the last one maestro.
+describe("headline difficulties", () => {
+  const TIERS: Record<number, string> = {
+    1: "novice", 2: "novice", 3: "novice",
+    4: "apprentice", 5: "apprentice", 6: "apprentice",
+    7: "virtuoso", 8: "virtuoso", 9: "virtuoso",
+    10: "maestro",
+  };
+  it("labels each track with the tier it sits in", () => {
+    for (const def of TRACK_DEFINITIONS) {
+      expect(def.metadata.difficulty, def.metadata.id).toBe(TIERS[def.metadata.order]);
+    }
+  });
+});

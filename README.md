@@ -11,7 +11,7 @@ A five-lane keyboard rhythm game that runs in the browser. You are the signal co
 | Ludwig van Beethoven | Symphony No. 9 in D minor | Op. 125 | IV. Finale, "Ode to Joy" theme | Orchestra-synth anthem: strings and organ over bass, light kick and snare on the last statement | Novice |
 | Johann Sebastian Bach | Cello Suite No. 1 in G major | BWV 1007 | Prelude, opening | Plucked arpeggios over a bass pulse with a soft strings pad | Apprentice |
 | Wolfgang Amadeus Mozart | Eine kleine Nachtmusik | K. 525 | I. Allegro, on the opening theme | String ensemble with a walking bass and light percussion on the strong beats | Apprentice |
-| Ludwig van Beethoven | Für Elise | WoO 59 | A section | Piano over plucked arpeggios with a soft strings pad, a low bass and a light hat | Virtuoso |
+| Ludwig van Beethoven | Für Elise | WoO 59 | A section | Piano over plucked arpeggios with a soft strings pad, a low bass and a light hat | Apprentice |
 | Johann Sebastian Bach | Toccata and Fugue in D minor | BWV 565 | Toccata, opening | Organ synth with a doubled pedal bass and a crash on the big chords | Virtuoso |
 | Wolfgang Amadeus Mozart | Symphony No. 40 in G minor | K. 550 | I. Molto allegro, first theme | Tense strings and pulse percussion | Virtuoso |
 | Ludwig van Beethoven | Symphony No. 5 in C minor | Op. 67 | I. Allegro con brio, opening | Percussive orchestra: string motif, organ brass, bass and drums | Virtuoso |

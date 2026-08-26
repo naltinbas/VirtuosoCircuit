@@ -215,7 +215,7 @@ const def: TrackDefinition = {
     movementOrExcerpt: "A section",
     bpm: BPM,
     timeSignature: [3, 8],
-    difficulty: "virtuoso",
+    difficulty: "apprentice",
     arrangementStyle: "Piano over plucked arpeggios with a soft strings pad, a low bass and a light hat",
     arrangementCredit:
       "Original game arrangement based on a public-domain composition, written for Virtuoso Circuit",

@@ -167,7 +167,8 @@ export class PracticePanel implements Screen {
     const session = this.app.session;
     if (!session) return;
     this.playhead.set(this.measureIndexAt(this.atMs));
-    this.position.textContent = `${session.track.metadata.title}, ${formatClock(this.atMs)} of ${formatClock(session.track.metadata.durationMs)}`;
+    const meta = session.track.metadata;
+    this.position.textContent = `${meta.title}, ${formatClock(this.atMs)} of ${formatClock(meta.durationMs)}`;
   }
 
   private seek(ms: number): void {

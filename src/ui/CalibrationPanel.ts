@@ -62,9 +62,24 @@ export class CalibrationPanel implements Screen {
     );
 
     const current = app.settings.current;
-    this.audio = this.offsetSlider("Audio offset", current.audioOffsetMs, "Positive when the sound reaches you later than the game thinks. Applies to judging and to the highway.", (v) => ({ audioOffsetMs: v }));
-    this.visual = this.offsetSlider("Visual offset", current.visualOffsetMs, "Positive draws the gems as if time were later, so they reach the gate earlier. Drawing only.", (v) => ({ visualOffsetMs: v }));
-    this.input = this.offsetSlider("Input offset", current.inputOffsetMs, "Positive forgives presses that land late. Judging only, and what the guided test sets.", (v) => ({ inputOffsetMs: v }));
+    this.audio = this.offsetSlider(
+      "Audio offset",
+      current.audioOffsetMs,
+      "Positive when the sound reaches you later than the game thinks. Applies to judging and to the highway.",
+      (v) => ({ audioOffsetMs: v }),
+    );
+    this.visual = this.offsetSlider(
+      "Visual offset",
+      current.visualOffsetMs,
+      "Positive draws the gems as if time were later, so they reach the gate earlier. Drawing only.",
+      (v) => ({ visualOffsetMs: v }),
+    );
+    this.input = this.offsetSlider(
+      "Input offset",
+      current.inputOffsetMs,
+      "Positive forgives presses that land late. Judging only, and what the guided test sets.",
+      (v) => ({ inputOffsetMs: v }),
+    );
 
     this.canvas.height = MARKER_HEIGHT;
     this.canvas.setAttribute("role", "img");
@@ -113,7 +128,9 @@ export class CalibrationPanel implements Screen {
         "Guided test",
         el("p", {
           className: "screen__note",
-          text: `Press any lane key on the beat. ${GUIDED_CALIBRATION.minTaps} steady taps are enough, and the test stops at ${GUIDED_CALIBRATION.maxTaps}.`,
+          text:
+            `Press any lane key on the beat. ${GUIDED_CALIBRATION.minTaps} steady taps are enough, ` +
+            `and the test stops at ${GUIDED_CALIBRATION.maxTaps}.`,
         }),
         testRow,
         this.testStatus,
@@ -332,9 +349,10 @@ export class CalibrationPanel implements Screen {
     event.stopPropagation();
     manager.tap(this.app.calibration.perfToAudioMs(event.timeStamp));
     const result = manager.result();
+    const median = formatOffset(result.medianMs);
     this.testStatus.textContent = result.enough
-      ? `${result.kept} steady taps, median ${formatOffset(result.medianMs)}. Finish when you are ready.`
-      : `${result.kept} of ${GUIDED_CALIBRATION.minTaps} steady taps, median ${formatOffset(result.medianMs)}.`;
+      ? `${result.kept} steady taps, median ${median}. Finish when you are ready.`
+      : `${result.kept} of ${GUIDED_CALIBRATION.minTaps} steady taps, median ${median}.`;
     if (manager.full) this.finishTest();
   };
 
@@ -344,13 +362,17 @@ export class CalibrationPanel implements Screen {
     if (manager === null) return;
     const result = manager.result();
     if (!result.enough) {
-      this.testStatus.textContent = `Only ${result.kept} steady taps out of ${result.taps}. Press on the beat at least ${GUIDED_CALIBRATION.minTaps} times.`;
+      this.testStatus.textContent =
+        `Only ${result.kept} steady taps out of ${result.taps}. ` +
+        `Press on the beat at least ${GUIDED_CALIBRATION.minTaps} times.`;
       return;
     }
     this.suggestedMs = result.suggestedInputOffsetMs;
     const late = this.suggestedMs >= 0;
     this.testStatus.textContent = `${result.kept} taps kept of ${result.taps}, spread ${Math.round(result.spreadMs)} ms.`;
-    this.suggestion.textContent = `${formatOffset(this.suggestedMs)}: your presses land ${Math.abs(this.suggestedMs)} ms ${late ? "late" : "early"}. Using this replaces the input offset.`;
+    this.suggestion.textContent =
+      `${formatOffset(this.suggestedMs)}: your presses land ${Math.abs(this.suggestedMs)} ms ` +
+      `${late ? "late" : "early"}. Using this replaces the input offset.`;
     this.suggestion.hidden = false;
     this.suggestionActions.hidden = false;
     this.app.announce(`Guided calibration suggests an input offset of ${formatOffset(this.suggestedMs)}.`);

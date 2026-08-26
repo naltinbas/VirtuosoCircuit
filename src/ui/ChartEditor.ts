@@ -230,7 +230,9 @@ export class ChartEditor implements Screen {
       this.positionLine.textContent = "";
       return;
     }
-    this.positionLine.textContent = `${track.metadata.title}, measure ${mark.measure}, beat ${mark.beatInMeasure + 1}, ${formatClock(mark.timeMs)} (${Math.round(mark.timeMs)} ms)`;
+    this.positionLine.textContent =
+      `${track.metadata.title}, measure ${mark.measure}, beat ${mark.beatInMeasure + 1}, ` +
+      `${formatClock(mark.timeMs)} (${Math.round(mark.timeMs)} ms)`;
     this.buildGridStrip();
     this.markNearestEvent(mark.timeMs);
   }
@@ -375,8 +377,9 @@ export class ChartEditor implements Screen {
       return;
     }
     const report = validateTrackReport(parsed, compiled);
+    const meta = compiled.metadata;
     const lines = [
-      `${compiled.metadata.title} (${compiled.metadata.id}), ${formatClock(compiled.metadata.durationMs)}, ${compiled.music.length} music notes.`,
+      `${meta.title} (${meta.id}), ${formatClock(meta.durationMs)}, ${compiled.music.length} music notes.`,
       `${report.errors.length} errors, ${report.warnings.length} warnings.`,
       ...report.issues.map((issue) => `${issue.level} ${issue.code}: ${issue.message}`),
     ];

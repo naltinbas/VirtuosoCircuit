@@ -48,6 +48,11 @@ const SURGE_KEYS: readonly string[] = GAME_KEYS.focusSurge;
 /** Keys that always keep their browser behavior: reload, fullscreen, dev tools. */
 const NEVER_PREVENTED: readonly string[] = ["F5", "F11", "F12"];
 
+/** The two overlay keys, which belong to the player whatever has focus. */
+function isOverlayKey(code: string): boolean {
+  return PERF_KEYS.includes(code) || DEBUG_KEYS.includes(code);
+}
+
 function isTextTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   if (target.isContentEditable) return true;
@@ -185,7 +190,7 @@ export class InputManager extends EventEmitter<InputEvents> {
     if (code === "") return;
     const state = this.stateOf();
     const gameplay = GAMEPLAY_STATES.has(state);
-    if (!gameplay && isTextTarget(event.target)) return;
+    if (!gameplay && !isOverlayKey(code) && isTextTarget(event.target)) return;
     if (this.shouldPrevent(code, state)) event.preventDefault();
     if (event.repeat) return;
     const perfTs = this.timestamp(event);
@@ -238,7 +243,7 @@ export class InputManager extends EventEmitter<InputEvents> {
     if (code === "") return;
     const state = this.stateOf();
     const gameplay = GAMEPLAY_STATES.has(state);
-    if (!gameplay && isTextTarget(event.target)) return;
+    if (!gameplay && !isOverlayKey(code) && isTextTarget(event.target)) return;
     if (this.shouldPrevent(code, state)) event.preventDefault();
     if (gameplay && this.bindings.isLaneCode(code)) event.stopPropagation();
     const release = this.heldState.up(code);

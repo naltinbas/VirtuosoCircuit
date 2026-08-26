@@ -3,7 +3,8 @@
 // Gradients and the corridor path are cached and only rebuilt when the canvas
 // size or the palette changes. The backdrop runs on scene time, which the
 // caller freezes under reduced motion and while a frame is frozen, so nothing
-// here needs a motion branch of its own.
+// here needs a motion branch of its own; a backdrop that has settled is kept
+// as pixels and copied back rather than painted again.
 
 import { HIGHWAY, JUDGMENTS, LANE_IDENTITIES, LAYOUT } from "../app/Config";
 import { LANES, type BeatMark, type Lane } from "../charts/ChartTypes";
@@ -43,6 +44,14 @@ export class HighwayRenderer {
   private particles = new Float64Array(SCENE.particleCount * PARTICLE_STRIDE);
   private random = seededRandom(1);
   private seed = 1;
+  /** Backdrop inputs of the previous frame, to spot a scene that has stopped moving. */
+  private lastSceneTimeMs = Number.NaN;
+  private lastEnergy = Number.NaN;
+  /** The last backdrop kept as pixels, and the inputs it was drawn from. */
+  private backdrop: HTMLCanvasElement | null = null;
+  private backdropCtx: CanvasRenderingContext2D | null = null;
+  private backdropSceneTimeMs = Number.NaN;
+  private backdropEnergy = Number.NaN;
   /** Song time of the next pending note per lane, for the ghost guide. */
   private readonly ghostTimes = new Float64Array(LANES.length);
 
@@ -56,6 +65,7 @@ export class HighwayRenderer {
     this.cacheWidth = m.width;
     this.cacheHeight = m.height;
     this.cachePalette = pal;
+    this.dropBackdrop();
     const { layout } = m;
 
     const sky = ctx.createLinearGradient(0, 0, 0, m.height);
@@ -109,6 +119,17 @@ export class HighwayRenderer {
     energy: number,
     deltaMs: number,
   ): void {
+    // The backdrop is a pure function of scene time, beam energy and the
+    // gradients prepare() holds, so a frame with the same three paints the
+    // same pixels: a pause, a frozen frame, the results dwell, an idle menu
+    // and gameplay under reduced motion all repeat here. Those frames copy the
+    // last one back instead of laying down a full canvas of gradients, rings,
+    // arches and motes again.
+    const settled = deltaMs === 0 && sceneTimeMs === this.lastSceneTimeMs && energy === this.lastEnergy;
+    this.lastSceneTimeMs = sceneTimeMs;
+    this.lastEnergy = energy;
+    if (settled && this.blitBackdrop(ctx, sceneTimeMs, energy)) return;
+
     ctx.fillStyle = this.sky ?? pal.skyBottom;
     ctx.fillRect(0, 0, m.width, m.height);
     // High contrast keeps the flat black field and nothing else.
@@ -119,6 +140,56 @@ export class HighwayRenderer {
     this.drawArches(ctx, m, pal, sceneTimeMs, horizonY);
     this.drawBeam(ctx, m, pal, sceneTimeMs, energy);
     this.drawMotes(ctx, m, pal, deltaMs);
+    // Only worth keeping once a frame has repeated: an animating scene would
+    // pay for a copy it never reads.
+    if (settled) this.keepBackdrop(ctx, sceneTimeMs, energy);
+  }
+
+  /** Repaints the stored backdrop if it was drawn from these very inputs. */
+  private blitBackdrop(ctx: CanvasRenderingContext2D, sceneTimeMs: number, energy: number): boolean {
+    const kept = this.backdrop;
+    if (!kept || sceneTimeMs !== this.backdropSceneTimeMs || energy !== this.backdropEnergy) return false;
+    const target = ctx.canvas;
+    if (kept.width !== target.width || kept.height !== target.height) return false;
+    ctx.save();
+    // Device pixels, so the copy lands one for one whatever the ratio is.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(kept, 0, 0);
+    ctx.restore();
+    return true;
+  }
+
+  /** Keeps the backdrop just drawn, which is all the canvas holds at this point. */
+  private keepBackdrop(ctx: CanvasRenderingContext2D, sceneTimeMs: number, energy: number): void {
+    if (typeof document === "undefined") return;
+    const source = ctx.canvas;
+    let kept = this.backdrop;
+    if (!kept) {
+      kept = document.createElement("canvas");
+      this.backdrop = kept;
+      this.backdropCtx = null;
+    }
+    if (kept.width !== source.width || kept.height !== source.height) {
+      kept.width = source.width;
+      kept.height = source.height;
+      this.backdropCtx = null;
+    }
+    if (!this.backdropCtx) this.backdropCtx = kept.getContext("2d", { alpha: false });
+    const into = this.backdropCtx;
+    if (!into) return;
+    into.setTransform(1, 0, 0, 1, 0, 0);
+    into.drawImage(source, 0, 0);
+    this.backdropSceneTimeMs = sceneTimeMs;
+    this.backdropEnergy = energy;
+  }
+
+  /** A resize, a palette change or a reseed makes the stored pixels wrong. */
+  private dropBackdrop(): void {
+    this.backdropSceneTimeMs = Number.NaN;
+    this.backdropEnergy = Number.NaN;
+    this.lastSceneTimeMs = Number.NaN;
+    this.lastEnergy = Number.NaN;
   }
 
   private drawRings(

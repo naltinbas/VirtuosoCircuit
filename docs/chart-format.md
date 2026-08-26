@@ -258,7 +258,7 @@ is four quarter events, then two two-beat holds starting together in lanes 1 and
 
 ## A worked example
 
-Drop this in as `src/charts/tracks/example-etude.ts` and it appears in the catalog. It is 96 beats at 96 bpm (60.4 seconds with the tail), two parts, six repeats of a four-bar block, and it passes the validator with no errors and no warnings.
+A whole track module, small enough to read at once: 96 beats at 96 bpm (60.4 seconds with the tail), two parts, six repeats of a four-bar block. It compiles and validates with no errors and no warnings. Saving it as `src/charts/tracks/example-etude.ts` puts it in the catalog, where `order: 1` collides with the minuet: a file that stays there needs a free order, an `unlockAfter` naming the track before it, and a maestro chart from order 7 on, all of which `tests/tracks.test.ts` checks.
 
 ```ts
 // src/charts/tracks/example-etude.ts
@@ -330,9 +330,9 @@ export default def;
 Things worth noticing in it, because they are the constraints that bite:
 
 - Every chart beat is a beat where the melody or the bass actually plays. The melody has onsets at beats 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12 and 14 of each block; the bass adds 0, 4, 8 and 12. Nothing in any chart falls anywhere else.
-- The two-lane chords sit on beats 0, 4 and 12, where the melody and the bass strike together. A chord over fewer onsets than it has lanes gets a `thin-chord` warning.
+- Every chord sits on a beat where the melody and the bass strike together: 0, 4 and 12 at apprentice, and 8 as well at virtuoso. A chord over fewer onsets than it has lanes gets a `thin-chord` warning.
 - The virtuoso hold in lane 2 runs from beat 14 to beat 16 of its block, and the next block's lane 2 note is at beat 18. Same-lane spacing is measured from the **end** of a hold, so ending a hold on the beat where the same lane restarts is an error, not a tight squeeze.
-- Each repeat gets its own phrase suffix. Without it all six copies would be one phrase with a 16-beat hole in it, which earns a `phrase-split` warning and a bonus that is far too hard to complete.
+- Each repeat gets its own phrase suffix. Without it the six copies are one phrase spanning the whole track, which pays only if every note in it is clean. The validator stays quiet either way: consecutive events are never more than two beats apart, so `phrase-split` has nothing to catch.
 
 Check it without starting the game:
 

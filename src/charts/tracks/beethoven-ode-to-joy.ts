@@ -143,6 +143,11 @@ const drumNotes = join(
 // so rising phrases climb to the right hand and falling ones come home to
 // the left. Bass and organ hits join a melody note as a chord two lanes
 // away; pulses that fall inside a held note go to a free lane.
+//
+// Two spots leave that mapping. The low A that closes the middle section is
+// the lowest note of the tune, so it takes lane 0 rather than lane 4. The
+// coda (D, C#, D, and C# has no lane at all) is charted as a rise to the top
+// lane instead, so the piece finishes on a long high hold.
 
 interface PhraseSpec {
   id: string;
@@ -154,10 +159,7 @@ interface PhraseSpec {
 /** Lay one statement's phrases at `startBeat`, prefixing ids so each statement scores separately. */
 function statement(prefix: string, startBeat: number, specs: readonly PhraseSpec[]): BeatEvent[] {
   const out: BeatEvent[] = [];
-  for (const s of specs) {
-    const id = s.id.startsWith("trill-") ? `trill-${prefix}-${s.id.slice(6)}` : `${prefix}-${s.id}`;
-    out.push(...lanes(startBeat + s.at, s.text, id));
-  }
+  for (const s of specs) out.push(...lanes(startBeat + s.at, s.text, `${prefix}-${s.id}`));
   return out;
 }
 
@@ -173,10 +175,14 @@ const NOVICE_OUTLINE: PhraseSpec[] = [
   { id: "a6", at: 56, text: "0/2 1/2 | 1h/1 r/1 0h!/1.5 r/0.5" },
 ];
 
-// Novice, later statements: the tune without the passing eighths.
+// Novice, later statements: the tune without the passing eighths. Statement 2
+// enters on an accent, statement 3 on a chord, so the arrival of the full
+// anthem does not read like a repeat.
 const RISE_FALL = "2/1 2 3 4 | 4 3 2 1";
+const RISE_FALL_ENTRY = "2!/1 2 3 4 | 4 3 2 1";
+const RISE_FALL_ARRIVAL = "[0,2]!/1 2 3 4 | 4 3 2 1";
 const NOVICE_TUNE: PhraseSpec[] = [
-  { id: "a1", at: 0, text: RISE_FALL },
+  { id: "a1", at: 0, text: RISE_FALL_ENTRY },
   { id: "a2", at: 8, text: "0/1 0 1 2 | 2h/1 r/1 1h/1.5 r/0.5" },
   { id: "a3", at: 16, text: RISE_FALL },
   { id: "a4", at: 24, text: "0/1 0 1 2 | 1h/1 r/1 0h!/1.5 r/0.5" },
@@ -185,6 +191,10 @@ const NOVICE_TUNE: PhraseSpec[] = [
   { id: "a5", at: 48, text: RISE_FALL },
   { id: "a6", at: 56, text: "0/1 0 1 2 | 1h/1 r/1 [0,2]!/1 r/1" },
 ];
+
+const NOVICE_TUTTI: PhraseSpec[] = NOVICE_TUNE.map((s) =>
+  s.id === "a1" ? { ...s, text: RISE_FALL_ARRIVAL } : s,
+);
 
 // The full melody rhythm, used for the bare first statement.
 const CLIMB_HALF_CADENCE = "0/1 0 1 2 | 2h/1 r/0.5 1/0.5 1h/1.5 r/0.5";
@@ -230,25 +240,24 @@ const APPRENTICE_TUTTI: PhraseSpec[] = [
   { id: "a6", at: 56, text: "[0,2]/1 0 [1,3] 2 | 1h/1 r/0.5 0/0.5 [0,2]!/1 r/1" },
 ];
 
-// Virtuoso, second statement: chords on beats 1 and 3, the turn figures
-// in bars 10 and 11 as short alternation phrases.
+// Virtuoso, second statement: chords on beats 1 and 3. The turn figures in
+// bars 10 and 11 stay inside their phrases; they are turns (F#, G, F#, D),
+// not trills, so they do not use the trill notation.
 const VIRTUOSO_HARMONY: PhraseSpec[] = [
   { id: "a1", at: 0, text: RISE_FALL_HALVES },
   { id: "a2", at: 8, text: "[0,2]/1 0 [1,3] 2 | 2h/1 r/0.5 1/0.5 1h/1.5 r/0.5" },
   { id: "a3", at: 16, text: RISE_FALL_HALVES },
   { id: "a4", at: 24, text: "[0,2]/1 0 [1,3] 2 | 1h/1 r/0.5 0/0.5 0h!/1.5 r/0.5" },
-  { id: "b1", at: 32, text: "[1,3]!/1 1 [0,2] 0 | [1,3]/1" },
-  { id: "trill-1", at: 37, text: "2/0.5 3/0.5 [0,2]/1 0/1" },
-  { id: "b2", at: 40, text: "[1,3]/1" },
-  { id: "trill-2", at: 41, text: "2/0.5 3/0.5 [0,2]/1" },
-  { id: "b2", at: 43, text: "1/1 | [0,2]/1 1 0h!/1.5 r/0.5" },
+  { id: "b1", at: 32, text: "[1,3]!/1 1 [0,2] 0 | [1,3] 2/0.5 3/0.5 [0,2]/1 0" },
+  { id: "b2", at: 40, text: "[1,3]/1 2/0.5 3/0.5 [0,2]/1 1 | [0,2]/1 1 0h!/1.5 r/0.5" },
   { id: "a5", at: 48, text: RISE_FALL_HALVES },
   { id: "a6", at: 56, text: "[0,2]/1 0 [1,3] 2 | 1h/1 r/0.5 0/0.5 [0,2]!/1 r/1" },
 ];
 
 // Virtuoso, third statement: three-note chords on the phrase downbeats and
-// the final cadence, pulses on beats 2 and 4 inside the held notes, and
-// chords on every beat through the last four bars.
+// the final cadence, pulses on beats 2 and 4 inside the held notes, and a
+// chord on every plain quarter of bars 9 to 16. Held notes, the pulses
+// inside them and the eighths of the turn figures stay on one lane.
 const RISE_FALL_TUTTI = "[0,2,4]!/1 2 [1,3] 4 | [2,4] 3 [0,2] 1";
 const VIRTUOSO_TUTTI: PhraseSpec[] = [
   { id: "a1", at: 0, text: RISE_FALL_TUTTI },
@@ -257,21 +266,18 @@ const VIRTUOSO_TUTTI: PhraseSpec[] = [
   { id: "a3", at: 16, text: RISE_FALL_TUTTI },
   { id: "a4", at: 24, text: "[0,2]/1 0 [1,3] 2 | 1h/1 3/0.5 0/0.5 0h!/1.5 r/0.5" },
   { id: "a4", at: 31, text: "2/1" },
-  { id: "b1", at: 32, text: "[1,3,4]!/1 1 [0,2] 0 | [1,3]/1" },
-  { id: "trill-1", at: 37, text: "2/0.5 3/0.5 [0,2]/1 0/1" },
-  { id: "b2", at: 40, text: "[1,3]/1" },
-  { id: "trill-2", at: 41, text: "2/0.5 3/0.5 [0,2]/1" },
-  { id: "b2", at: 43, text: "1/1 | [0,2]/1 1 0h!/1.5 r/0.5" },
+  { id: "b1", at: 32, text: "[1,3,4]!/1 [1,3] [0,2] [0,2] | [1,3] 2/0.5 3/0.5 [0,2]/1 [0,2]" },
+  { id: "b2", at: 40, text: "[1,3]/1 2/0.5 3/0.5 [0,2]/1 [1,3] | [0,2]/1 [1,3] 0h!/1.5 r/0.5" },
   { id: "b2", at: 47, text: "2/1" },
-  { id: "a5", at: 48, text: "[0,2,4]!/1 2 [1,3] [2,4] | [2,4] 3 [0,2] [1,3]" },
-  { id: "a6", at: 56, text: "[0,2]/1 0 [1,3] [0,2] | 1h/1 3/0.5 0/0.5 [0,2,4]!/1 r/1" },
+  { id: "a5", at: 48, text: "[0,2,4]!/1 [0,2] [1,3] [2,4] | [2,4] [1,3] [0,2] [1,3]" },
+  { id: "a6", at: 56, text: "[0,2]/1 [0,2] [1,3] [0,2] | 1h/1 3/0.5 0/0.5 [0,2,4]!/1 r/1" },
 ];
 
 const noviceChart = chart(
   "novice",
   statement("s1", STATEMENT[0], NOVICE_OUTLINE),
   statement("s2", STATEMENT[1], NOVICE_TUNE),
-  statement("s3", STATEMENT[2], NOVICE_TUNE),
+  statement("s3", STATEMENT[2], NOVICE_TUTTI),
   lanes(CODA_BEAT, "[2,4]!/2 3h/1.5 r/0.5 | 4h!/3.5", "coda"),
 );
 

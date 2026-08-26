@@ -583,6 +583,9 @@ export class App implements AppApi {
   /** Walks to LOADING_TRACK the legal way, wherever the request came from. */
   private enterLoading(): void {
     if (this.router.state === "LOADING_TRACK") return;
+    // A finished run leaves through its results screen; every other screen
+    // that cannot load a track directly can reach track select.
+    if (!this.router.can("LOADING_TRACK") && this.router.can("RESULTS")) this.router.goTo("RESULTS");
     if (!this.router.can("LOADING_TRACK")) this.router.goTo("TRACK_SELECT");
     this.router.goTo("LOADING_TRACK");
   }

@@ -157,20 +157,24 @@ export class SettingsPanel implements Screen {
       ),
       fieldset(
         "Highway",
-        this.toggle("showHints", "Key hints", "Lane keys under the gate, and upcoming keys in practice."),
-        this.toggle("flashEffects", "Flash effects", "Screen flashes on a Radiant hit and a Perfect Passage."),
+        this.toggle("showHints", "Key hints", "Draws the lane key under each receptor at the gate."),
+        this.toggle(
+          "flashEffects",
+          "Flash effects",
+          "A lane flash on a hit, sparks on a Radiant, an edge pulse on a Perfect Passage.",
+        ),
         this.toggle("showBeatGrid", "Beat grid in performances"),
         this.toggle("practiceBeatGrid", "Beat grid in practice"),
       ),
       fieldset(
         "Play",
         this.toggle("noFail", "Disable fail state", "The Aura Meter still moves, but a run never ends early."),
-        this.toggle("focusSurgeEnabled", "Focus Surge", "Space spends a full Aura Meter for double score."),
+        this.toggle("focusSurgeEnabled", "Focus Surge", "Space needs a full Aura Meter, then doubles the score for 8 seconds."),
         this.toggle("unlockAll", "Unlock all tracks", "Opens every wing without completing the one before it."),
       ),
       fieldset(
         "Display",
-        this.toggle("reducedMotion", "Reduced motion", "Stops the background, the sparks and the pulses."),
+        this.toggle("reducedMotion", "Reduced motion", "Freezes the background, drops the sparks, stops the beat pulse."),
         this.toggle("highContrast", "High contrast", "Black background, brighter lanes, no glow."),
         this.textScale.element,
         field(fullscreenRow, { label: "Fullscreen", className: "field field--action" }),
@@ -197,7 +201,7 @@ export class SettingsPanel implements Screen {
     this.calibrationValue.textContent = `Audio ${s.audioOffsetMs} ms, visual ${s.visualOffsetMs} ms, input ${s.inputOffsetMs} ms`;
     this.fullscreenButton.textContent = document.fullscreenElement ? "Leave fullscreen" : "Enter fullscreen";
     const notes: string[] = [];
-    if (!this.app.settings.persistent) notes.push("Settings cannot be saved in this browser and reset when it closes.");
+    if (!this.app.settings.persistent) notes.push("This browser cannot save settings, so they reset when it closes.");
     if (!this.app.audio.available) notes.push("Audio is unavailable in this browser.");
     this.storageNote.textContent = notes.join(" ");
     this.storageNote.hidden = notes.length === 0;

@@ -55,7 +55,7 @@ export class ResultsScreen implements Screen {
     this.body.replaceChildren();
     this.actions.replaceChildren();
     if (!data) {
-      this.body.append(el("p", { className: "screen__note", text: "Nothing was played yet." }));
+      this.body.append(el("p", { className: "screen__note", text: "You have not finished a run yet." }));
       this.actions.append(button("Track select", () => this.app.exitToTrackSelect(), { autofocus: true }));
       return;
     }
@@ -102,7 +102,7 @@ export class ResultsScreen implements Screen {
     if (data.mode === "free") return "Free performance, nothing saved.";
     if (data.assisted) return "Not saved (debug).";
     if (data.summary.failed) return "Performance interrupted, nothing saved.";
-    if (!data.summary.completed) return "Run left early, nothing saved.";
+    if (!data.summary.completed) return "You left before the end, nothing saved.";
     return "Nothing saved.";
   }
 
@@ -178,7 +178,7 @@ export class ResultsScreen implements Screen {
   }
 
   private timingSummary(deltas: readonly number[]): string {
-    if (deltas.length === 0) return "Timing distribution: no notes were hit.";
+    if (deltas.length === 0) return "Timing distribution: no hits to plot.";
     let sum = 0;
     for (const d of deltas) sum += d;
     const average = sum / deltas.length;

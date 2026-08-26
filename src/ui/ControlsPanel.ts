@@ -89,7 +89,7 @@ export class ControlsPanel implements Screen {
     const reference = el("section", { className: "panel-group" });
     reference.append(
       el("h3", { className: "panel-group__title", text: "Fixed alternates" }),
-      el("p", { className: "screen__note", text: "These always work as well as your own keys." }),
+      el("p", { className: "screen__note", text: "These work in addition to your own keys." }),
       alternates,
       el("h3", { className: "panel-group__title", text: "Shortcuts" }),
       shortcuts,

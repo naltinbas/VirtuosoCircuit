@@ -9,9 +9,9 @@ import { formatClock, formatScore } from "../utils/TimeUtils";
 import { button, el, type Screen } from "./UIManager";
 
 const MODE_HEADINGS: Record<PlayMode, string> = {
-  performance: "Begin Performance",
-  practice: "Practice Studio",
-  free: "Free Performance",
+  performance: "Begin performance",
+  practice: "Practice studio",
+  free: "Free performance",
 };
 
 const MODE_NOTES: Record<PlayMode, string> = {
@@ -47,7 +47,7 @@ export class TrackSelect implements Screen {
     this.list.replaceChildren();
     const tracks = this.app.tracks();
     if (tracks.length === 0) {
-      this.list.append(el("p", { className: "tracks__empty", text: "No performances are available yet." }));
+      this.list.append(el("p", { className: "tracks__empty", text: "The catalog has no tracks yet." }));
       return;
     }
     for (const track of tracks) this.list.append(this.card(track));

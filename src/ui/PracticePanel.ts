@@ -102,14 +102,14 @@ export class PracticePanel implements Screen {
       onChange: (on) => this.app.settings.save({ practiceBeatGrid: on }),
     });
     this.hints = toggleField({
-      label: "Upcoming key hints",
+      label: "Key hints",
       checked: settings.showHints,
       onChange: (on) => this.app.settings.save({ showHints: on }),
     });
     this.ghost = toggleField({
       label: "Ghost guide",
       checked: settings.ghostGuide,
-      note: "Shows the key that would be pressed, just before the gem lands.",
+      note: "Marks the lane at the gate just before a gem lands.",
       onChange: (on) => this.app.settings.save({ ghostGuide: on }),
     });
 

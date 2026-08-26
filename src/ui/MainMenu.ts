@@ -7,7 +7,7 @@ import { button, el, type Screen } from "./UIManager";
 
 /** The one line that opens the game, repeated at the top of the credits. */
 export const PREMISE =
-  "You are the signal conductor. Restore the dormant concert hall one performance at a time.";
+  "You are the signal conductor. The concert hall has been dark a long time, and finishing a piece lights another wing.";
 
 export class MainMenu implements Screen {
   readonly element: HTMLElement;
@@ -30,14 +30,14 @@ export class MainMenu implements Screen {
     this.menuList = el("nav", { className: "menu__list" });
     this.menuList.setAttribute("aria-label", "Main menu options");
     this.menuList.append(
-      button("Begin Performance", () => this.startMode("performance"), { autofocus: true }),
-      button("Practice Studio", () => this.startMode("practice")),
-      button("Free Performance", () => this.startMode("free")),
+      button("Begin performance", () => this.startMode("performance"), { autofocus: true }),
+      button("Practice studio", () => this.startMode("practice")),
+      button("Free performance", () => this.startMode("free")),
       button("Calibration", () => this.app.router.open("CALIBRATION")),
       button("Settings", () => this.app.router.open("SETTINGS")),
       button("Controls", () => this.app.router.open("CONTROLS")),
-      button("Credits and Licenses", () => this.app.router.open("CREDITS")),
-      button("Reset Progress", () => this.openDialog(), { className: "button button--quiet" }),
+      button("Credits and licenses", () => this.app.router.open("CREDITS")),
+      button("Reset progress", () => this.openDialog(), { className: "button button--quiet" }),
     );
 
     this.dialog = el("div", { className: "dialog" });
@@ -47,7 +47,7 @@ export class MainMenu implements Screen {
     this.dialog.hidden = true;
     const dialogText = el("p", {
       className: "dialog__text",
-      text: "Reset progress? Best scores, completions and unlocked wings are deleted. Settings, key bindings and calibration stay.",
+      text: "Reset progress? This deletes your best scores, completions and unlocked wings. Settings, key bindings and calibration offsets stay.",
     });
     this.confirmButton = button("Reset progress", () => this.confirmReset(), {
       className: "button button--danger",

@@ -56,6 +56,7 @@ export const ACCURACY_WEIGHTS: Record<Judgment, number> = {
 };
 
 export type Seal = "S" | "A" | "B" | "C" | "D" | "unfinished";
+export const SEALS: readonly Seal[] = ["S", "A", "B", "C", "D", "unfinished"];
 
 export const SEAL_THRESHOLDS = {
   /** Accuracy floor for S, plus a miss cap. */

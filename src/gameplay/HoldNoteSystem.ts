@@ -37,6 +37,13 @@ export class HoldNoteSystem {
   }
 
   start(note: NoteRuntime, t: number): void {
+    const previous = this.holding[note.note.lane];
+    // Overlapping heads in one lane are a chart error, but a press that lands
+    // on one must not leave the older note holding for the rest of the run.
+    if (previous !== null && previous !== note) {
+      previous.state = "holdDropped";
+      this.handlers.onEnd(previous, false, true);
+    }
     note.state = "holding";
     note.holdTicksPaid = 0;
     note.holdProgress = 0;

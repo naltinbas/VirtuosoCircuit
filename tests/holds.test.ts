@@ -154,6 +154,26 @@ describe("hold release", () => {
   });
 });
 
+describe("overlapping heads", () => {
+  it("hands the lane to the newer hold and lets the older one go", () => {
+    const game = gameFor([
+      { timeMs: 1000, lanes: [0], durationMs: 500 },
+      { timeMs: 1200, lanes: [0], durationMs: 500 },
+    ]);
+    const ends = collect(game, "holdEnd");
+    game.press(0, 1000);
+    game.press(0, 1200);
+    expect(ends).toEqual([{ noteId: "e0L0", completed: false, quiet: true }]);
+    expect(game.summary().earlyReleases).toBe(0);
+    expect(game.snapshot().holdingLanes[0]).toBe(true);
+    game.update(1700);
+    expect(ends).toEqual([
+      { noteId: "e0L0", completed: false, quiet: true },
+      { noteId: "e1L0", completed: true, quiet: false },
+    ]);
+  });
+});
+
 describe("cancelHolds", () => {
   it("drops holds quietly", () => {
     const game = gameFor([HOLD]);

@@ -104,6 +104,15 @@ function pulsed(startBeat: number, chords: readonly Chord[], strong: number, wea
   return melody(startBeat, tokens.join(" ")).notes;
 }
 
+/** Root on beats 1 and 3, so the second statement walks rather than sits. */
+function halfBar(startBeat: number, chords: readonly Chord[], velocity: number) {
+  const tokens: string[] = [];
+  for (let i = 0; i < chords.length; i += 2) {
+    tokens.push(`${BASS_LOW[chords[i]]}/2`);
+  }
+  return melody(startBeat, tokens.join(" "), velocity).notes;
+}
+
 /** Root on every beat, low on 1 and 3, an octave up on 2 and 4. */
 function marching(startBeat: number, chords: readonly Chord[], velocity: number) {
   const tokens = chords.map((c, i) => `${(i % 2 === 0 ? BASS_LOW : BASS_HIGH)[c]}/1`);
@@ -123,7 +132,7 @@ const organNotes = join(
 );
 
 const bassNotes = join(
-  sustained(STATEMENT[1], THEME_HARMONY, BASS_LOW, 0.6),
+  halfBar(STATEMENT[1], THEME_HARMONY, 0.6),
   marching(STATEMENT[2], THEME_HARMONY, 0.75),
   marching(CODA_BEAT, CODA_HARMONY.slice(0, BAR), 0.75),
   melody(CODA_BEAT + BAR, "D2/4", 0.8),

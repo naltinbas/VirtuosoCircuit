@@ -174,7 +174,9 @@ export class SettingsPanel implements Screen {
     );
 
     const actions = el("div", { className: "screen__actions" });
-    actions.append(button("Back", () => this.app.router.back(), { autofocus: true }));
+    // No autofocus here: focusing a control at the foot of a long screen
+    // would open it scrolled to the bottom.
+    actions.append(button("Back", () => this.app.router.back()));
     this.element.append(actions);
   }
 

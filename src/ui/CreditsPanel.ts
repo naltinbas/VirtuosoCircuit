@@ -42,10 +42,10 @@ export class CreditsPanel implements Screen {
 
     this.element.append(
       header,
+      actions,
       this.compositionSection(),
       this.arrangementSection(),
       this.manifestSection(),
-      actions,
     );
   }
 

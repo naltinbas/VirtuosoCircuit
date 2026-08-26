@@ -92,7 +92,7 @@ export class CalibrationPanel implements Screen {
 
     const actions = el("div", { className: "screen__actions" });
     actions.append(
-      button("Save and close", () => this.saveAndClose(), { autofocus: true }),
+      button("Save and close", () => this.saveAndClose()),
       button("Reset offsets", () => this.resetOffsets(), { className: "button button--quiet" }),
       button("Back", () => this.app.router.back(), { className: "button button--quiet" }),
     );

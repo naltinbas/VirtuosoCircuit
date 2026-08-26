@@ -96,7 +96,7 @@ export class ControlsPanel implements Screen {
     );
 
     const actions = el("div", { className: "screen__actions" });
-    actions.append(button("Back", () => this.app.router.back(), { autofocus: true }));
+    actions.append(button("Back", () => this.app.router.back()));
 
     this.element.append(header, list, presets, this.status, reference, actions);
   }

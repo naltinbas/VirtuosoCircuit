@@ -134,6 +134,7 @@ export class ChartEditor implements Screen {
 
     this.element.append(
       header,
+      actions,
       pickers,
       this.positionLine,
       this.timeline,
@@ -144,7 +145,6 @@ export class ChartEditor implements Screen {
       el("h3", { className: "panel-group__title", text: "Import and export" }),
       io,
       this.reportBox,
-      actions,
     );
   }
 
@@ -244,7 +244,8 @@ export class ChartEditor implements Screen {
       const mark = this.beats[i];
       const cell = el("span", {
         className: `editor__beat${mark.isDownbeat ? " editor__beat--downbeat" : ""}${i === this.beatIndex ? " editor__beat--at" : ""}`,
-        text: mark.isDownbeat ? `${mark.measure}` : `${mark.beatInMeasure + 1}`,
+        // Downbeats carry the measure number, so a strip of beats reads as bars.
+        text: mark.isDownbeat ? `m${mark.measure}` : `${mark.beatInMeasure + 1}`,
       });
       cells.push(cell);
     }
@@ -261,19 +262,22 @@ export class ChartEditor implements Screen {
       this.eventBox.append(el("p", { className: "screen__note", text: "This difficulty has no chart." }));
       return;
     }
+    const beatsPerMeasure = this.track?.metadata.timeSignature[0] ?? 4;
     const table = el("table", { className: "editor__table" });
     const head = el("thead");
     const headRow = el("tr");
-    for (const label of ["Time", "Measure.beat", "Type", "Lanes", "Hold", "Phrase"]) {
+    for (const label of ["Time", "Measure", "Beat", "Type", "Lanes", "Hold", "Phrase"]) {
       headRow.append(el("th", { text: label }));
     }
     head.append(headRow);
     const body = el("tbody");
     for (const event of chart.events) {
       const row = el("tr");
+      const beatInMeasure = event.beat - (event.measure - 1) * beatsPerMeasure + 1;
       row.append(
         el("td", { text: `${Math.round(event.timeMs)} ms` }),
-        el("td", { text: `${event.measure}.${event.beat.toFixed(2)}` }),
+        el("td", { text: `${event.measure}` }),
+        el("td", { text: beatInMeasure.toFixed(2) }),
         el("td", { text: event.type }),
         el("td", { text: laneText(event) }),
         el("td", { text: event.durationMs > 0 ? `${Math.round(event.durationMs)} ms` : "" }),

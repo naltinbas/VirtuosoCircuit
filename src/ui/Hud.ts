@@ -27,6 +27,9 @@ interface CountIn {
   beatMs: number;
 }
 
+/** How long a flashed line stays, matching the hud-flash animation in the CSS. */
+const FLASH_MS = 900;
+
 interface Readout {
   element: HTMLElement;
   value: HTMLElement;
@@ -74,6 +77,7 @@ export class Hud {
 
   private durationMs = 1;
   private countIn: CountIn | null = null;
+  private flashTimer: ReturnType<typeof setTimeout> | null = null;
   private showDelta = false;
   private lastClock = "";
   private lastCountdown = "";
@@ -158,11 +162,25 @@ export class Hud {
 
   /** One line that fades on its own, for Recenter and Perfect Passage. */
   flashMessage(text: string): void {
+    this.clearFlash();
     this.messageEl.textContent = text;
     this.messageEl.classList.remove("is-flash");
     // Forcing layout restarts the CSS animation for a repeated message.
     void this.messageEl.offsetWidth;
     this.messageEl.classList.add("is-flash");
+    // Reduced motion turns the fade off, so the line is taken back by a timer
+    // rather than by the end of the animation.
+    this.flashTimer = setTimeout(() => {
+      this.flashTimer = null;
+      this.messageEl.classList.remove("is-flash");
+      this.messageEl.textContent = "";
+    }, FLASH_MS);
+  }
+
+  private clearFlash(): void {
+    if (this.flashTimer === null) return;
+    clearTimeout(this.flashTimer);
+    this.flashTimer = null;
   }
 
   /** Practice enters mid track, so the count-in is in beats rather than 3, 2, 1. */
@@ -257,6 +275,7 @@ export class Hud {
   }
 
   private resetCache(): void {
+    this.clearFlash();
     this.lastClock = "";
     this.lastCountdown = "";
     this.lastJudgment = "";

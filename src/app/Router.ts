@@ -32,7 +32,8 @@ export const TRANSITIONS: Record<GameState, readonly GameState[]> = {
   TRACK_COMPLETE: ["RESULTS"],
   PERFORMANCE_INTERRUPTED: ["RESULTS"],
   RESULTS: ["LOADING_TRACK", "TRACK_SELECT", "MAIN_MENU"],
-  CHART_EDITOR: ["MAIN_MENU"],
+  // The editor previews a chart by starting the track in practice mode.
+  CHART_EDITOR: ["MAIN_MENU", "LOADING_TRACK"],
 };
 
 /** Screens that open over whatever asked for them and return there. */

@@ -20,6 +20,7 @@ import {
   type Section,
   type TrackChart,
 } from "../charts/ChartTypes";
+import { validateChartReport, type ValidationReport } from "../charts/ChartValidator";
 import { TRACK_DEFINITIONS, getTrack } from "../charts/TrackCatalog";
 import type { NoteView } from "../gameplay/NoteScheduler";
 import { PracticeSystem } from "../gameplay/PracticeSystem";
@@ -37,7 +38,7 @@ import { ResultsScreen } from "../ui/ResultsScreen";
 import { TrackSelect } from "../ui/TrackSelect";
 import { UIManager } from "../ui/UIManager";
 import { clamp } from "../utils/MathUtils";
-import { AUDIO, DEBUG_ENABLED, HIGHWAY, type Judgment } from "./Config";
+import { AUDIO, DEBUG_ENABLED, HIGHWAY, LANE_IDENTITIES, type Judgment } from "./Config";
 import { GAMEPLAY_STATES, type GameState, type PlayMode } from "./GameState";
 import { Router } from "./Router";
 
@@ -64,6 +65,105 @@ export interface ResultsData {
   unlockedTrackId?: string;
 }
 
+/** Why the run is paused, which is what decides between the two paused screens. */
+export type PauseReason = "menu" | "practice";
+
+/** The keyboard handover the rebinding screen needs. */
+export interface KeyCaptureApi {
+  readonly capturing: boolean;
+  /** Takes the next key press. The handler gets null when the player cancelled. */
+  begin(handler: (code: string | null) => void): () => void;
+}
+
+/**
+ * What the calibration screen needs from the audio side. It owns its own
+ * scheduling loop, so it asks for times and clicks rather than for the engine.
+ */
+export interface CalibrationApi {
+  audioNowMs(): number;
+  perfToAudioMs(perfMs: number): number;
+  outputLatencyMs(): number;
+  readonly outputLatencySupported: boolean;
+  isLaneKey(code: string): boolean;
+  /** Schedules one metronome click on the audio clock and returns a cancel. */
+  clickAt(atAudioMs: number, strong: boolean): () => void;
+  playTestTone(): void;
+}
+
+/** Renderer and session switches the debug overlay owns. */
+export interface DebugFlags {
+  beatGrid: boolean;
+  hitWindows: boolean;
+  noteIds: boolean;
+  laneBounds: boolean;
+  autoplay: boolean;
+  slowMotion: boolean;
+  effects: boolean;
+}
+
+export interface InputLogEntry {
+  lane: Lane;
+  laneName: string;
+  kind: "press" | "release";
+  songMs: number;
+  perfTs: number;
+  /** Judgment delta of the press, or null when it matched no note. */
+  deltaMs: number | null;
+  judgment: Judgment | null;
+}
+
+/** One reading of everything the debug overlay prints. */
+export interface DebugStats {
+  state: GameState;
+  fps: number;
+  frameMs: number;
+  audioMs: number;
+  songMs: number;
+  displayMs: number;
+  rate: number;
+  outputLatencyMs: number;
+  outputLatencySupported: boolean;
+  audioOffsetMs: number;
+  visualOffsetMs: number;
+  inputOffsetMs: number;
+  judgmentOffsetMs: number;
+  beat: number;
+  measure: number;
+  beatInMeasure: number;
+  approachMs: number;
+  trackId: string | null;
+  difficulty: Difficulty | null;
+  mode: PlayMode | null;
+  assisted: boolean;
+  eventCursor: number;
+  scheduledCount: number;
+  liveVoices: number;
+  liveEffects: number;
+  visibleNotes: number;
+  particles: number;
+  heldLanes: readonly boolean[];
+  heldKeys: readonly string[];
+  score: number;
+  combo: number;
+  multiplier: number;
+  aura: number;
+  accuracy: number;
+  judgedCount: number;
+  totalNotes: number;
+  misses: number;
+  inputLog: readonly InputLogEntry[];
+}
+
+/** Debug tooling. Null in a build with the debug flag off. */
+export interface DebugApiHooks {
+  readonly flags: Readonly<DebugFlags>;
+  setFlag(flag: keyof DebugFlags, on: boolean): void;
+  stats(): DebugStats;
+  /** Validation report for the chart being played, or null with no session. */
+  validation(): ValidationReport | null;
+  openChartEditor(): void;
+}
+
 /** Everything a UI module may do. Screens never see the subsystems themselves. */
 export interface AppApi {
   router: Router;
@@ -85,6 +185,10 @@ export interface AppApi {
   setPracticeLoop(startMs: number, endMs: number, enabled: boolean): void;
   session: Session | null;
   lastResults: ResultsData | null;
+  pauseReason: PauseReason;
+  keys: KeyCaptureApi;
+  calibration: CalibrationApi;
+  debug: DebugApiHooks | null;
   toggleFullscreen(): void;
   resetProgress(): void;
   announce(text: string): void;
@@ -150,12 +254,21 @@ const DEBUG_GOTO_STATES: ReadonlySet<GameState> = new Set([
 /** Song time step used when the debug api runs a run forward without frames. */
 const STEP_MS = 8;
 
+/** Input events kept for the debug overlay. */
+const INPUT_LOG_SIZE = 8;
+
+/** What the debug slow motion multiplies the clock rate by. */
+const SLOW_MOTION_RATE = 0.5;
+
 export class App implements AppApi {
   readonly router: Router;
   readonly settings: SettingsStore;
   readonly save: SaveManager;
   readonly ready: Promise<void>;
   readonly audio: { available: boolean; unlocked: boolean; unlock(): Promise<boolean> };
+  readonly keys: KeyCaptureApi;
+  readonly calibration: CalibrationApi;
+  readonly debug: DebugApiHooks | null;
 
   pendingMode: PlayMode = "performance";
 
@@ -204,6 +317,22 @@ export class App implements AppApi {
   private frameMs = 16;
   private seed = 1;
   private debugView = false;
+
+  private pauseReasonValue: PauseReason = "menu";
+  /** Loop and speed as they were when the practice panel opened. */
+  private practiceMark = "";
+  private readonly debugFlags: DebugFlags = {
+    beatGrid: false,
+    hitWindows: false,
+    noteIds: false,
+    laneBounds: false,
+    autoplay: false,
+    slowMotion: false,
+    effects: true,
+  };
+  private readonly inputLog: InputLogEntry[] = [];
+  private validatedGame: RhythmGame | null = null;
+  private validationReport: ValidationReport | null = null;
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -258,11 +387,45 @@ export class App implements AppApi {
       unlock: () => engine.unlock(),
     };
 
-    this.ui = new UIManager(uiRoot, this, {
-      move: () => this.sfx.play("menu-move"),
-      select: () => this.sfx.play("menu-select"),
-      back: () => this.sfx.play("menu-back"),
-    });
+    const input = this.input;
+    this.keys = {
+      get capturing(): boolean {
+        return input.capturing;
+      },
+      begin: (handler) => input.beginCapture(handler),
+    };
+    this.calibration = {
+      audioNowMs: () => this.engine.nowMs(),
+      perfToAudioMs: (perfMs) => this.engine.perfToAudioMs(perfMs),
+      outputLatencyMs: () => this.engine.outputLatencyMs(),
+      get outputLatencySupported(): boolean {
+        return engine.outputLatencySupported;
+      },
+      isLaneKey: (code) => this.bindings.isLaneCode(code),
+      clickAt: (atAudioMs, strong) =>
+        this.sfx.playAt(strong ? "metronome-strong" : "metronome-weak", atAudioMs),
+      playTestTone: () => this.sfx.play("calibration-tone"),
+    };
+    this.debug = DEBUG_ENABLED
+      ? {
+          flags: this.debugFlags,
+          setFlag: (flag, on) => this.setDebugFlag(flag, on),
+          stats: () => this.debugStats(),
+          validation: () => this.chartValidation(),
+          openChartEditor: () => this.openChartEditor(),
+        }
+      : null;
+
+    this.ui = new UIManager(
+      uiRoot,
+      this,
+      {
+        move: () => this.sfx.play("menu-move"),
+        select: () => this.sfx.play("menu-select"),
+        back: () => this.sfx.play("menu-back"),
+      },
+      (state) => (state === "PAUSED" ? this.pauseReasonValue : null),
+    );
     this.hud = new Hud(this);
     root.insertBefore(this.hud.element, uiRoot);
 
@@ -381,10 +544,10 @@ export class App implements AppApi {
     this.buildFrame(track, game);
 
     if (practice) {
-      this.transport.setRate(practice.rate);
+      this.transport.setRate(this.effectiveRate());
       this.enterPractice();
     } else {
-      this.transport.setRate(1);
+      this.transport.setRate(this.effectiveRate());
       const start = this.countdownStartMs();
       this.clock.start(start);
       this.router.goTo("COUNTDOWN");
@@ -401,7 +564,8 @@ export class App implements AppApi {
     this.router.goTo("LOADING_TRACK");
   }
 
-  pause(): void {
+  /** The practice panel is a pause too, which is what picks the screen shown. */
+  pause(reason: PauseReason = "menu"): void {
     const session = this.current;
     if (!session || !GAMEPLAY_STATES.has(this.router.state)) return;
     this.input.clearHeld();
@@ -411,14 +575,35 @@ export class App implements AppApi {
     this.clock.pause();
     this.transport.pause();
     this.sfx.play("pause");
+    this.pauseReasonValue = session.practice ? reason : "menu";
+    this.practiceMark = this.practiceSignature();
     this.router.goTo("PAUSED");
-    this.announce("Paused");
+    this.announce(this.pauseReasonValue === "practice" ? "Practice panel" : "Paused");
+  }
+
+  get pauseReason(): PauseReason {
+    return this.pauseReasonValue;
   }
 
   resume(): void {
     const session = this.current;
     if (!session || this.router.state !== "PAUSED") return;
     void this.engine.unlock();
+    if (this.pauseReasonValue === "practice" && session.practice) {
+      // A new loop range or a new speed means the pass starts again from the
+      // loop entry; anything else picks up where it stopped.
+      const rebuilt = this.practiceSignature() !== this.practiceMark;
+      this.router.goTo("PRACTICE");
+      if (rebuilt) this.restartPracticePass();
+      else {
+        this.clock.resume();
+        this.transport.resume();
+      }
+      this.lastDisplayMs = null;
+      this.sfx.play("resume");
+      this.focusHighway();
+      return;
+    }
     const target = this.router.resumeState ?? (session.mode === "practice" ? "PRACTICE" : "PLAYING");
     if (target === "COUNTDOWN") {
       // Give the player a moment of run up rather than dropping them on a note.
@@ -499,7 +684,7 @@ export class App implements AppApi {
     this.bindGame(game);
     this.transport.setTrack(track);
     this.transport.setMetronome(settings.metronome);
-    this.transport.setRate(practice.rate);
+    this.transport.setRate(this.effectiveRate());
     this.hud.setTrack(track, difficulty, "practice");
     this.seed = 1;
     this.renderer.clearEffects();
@@ -607,6 +792,93 @@ export class App implements AppApi {
   private setDebugView(on: boolean): void {
     this.debugView = on && DEBUG_ENABLED;
     this.hud.setShowDelta(this.debugView);
+  }
+
+  private setDebugFlag(flag: keyof DebugFlags, on: boolean): void {
+    if (this.debugFlags[flag] === on) return;
+    this.debugFlags[flag] = on;
+    if (flag === "autoplay") {
+      this.setAutoplay(on);
+      return;
+    }
+    if (flag !== "slowMotion") return;
+    const session = this.current;
+    if (!session) return;
+    // Changing the rate mid stream is a debug assist, so the run stops counting.
+    session.assisted = true;
+    this.transport.setRate(this.effectiveRate());
+  }
+
+  private chartValidation(): ValidationReport | null {
+    const session = this.current;
+    if (!session) return null;
+    if (this.validatedGame !== session.game) {
+      this.validatedGame = session.game;
+      this.validationReport = validateChartReport(session.game.chart, session.track);
+    }
+    return this.validationReport;
+  }
+
+  /** One reading for the debug overlay. Built on demand, a few times a second. */
+  private debugStats(): DebugStats {
+    const settings = this.settings.current;
+    const session = this.current;
+    const snapshot = session?.game.snapshot() ?? null;
+    const displayMs = this.lastDisplayMs ?? 0;
+    const position = this.mapper?.positionAtMs(displayMs) ?? { beat: 0, measure: 0, beatInMeasure: 0 };
+    return {
+      state: this.router.state,
+      fps: this.fps,
+      frameMs: this.frameMs,
+      audioMs: this.lastFrameAudioMs ?? 0,
+      songMs: snapshot?.songMs ?? 0,
+      displayMs,
+      rate: this.clock.rate,
+      outputLatencyMs: this.engine.outputLatencyMs(),
+      outputLatencySupported: this.engine.outputLatencySupported,
+      audioOffsetMs: settings.audioOffsetMs,
+      visualOffsetMs: settings.visualOffsetMs,
+      inputOffsetMs: settings.inputOffsetMs,
+      judgmentOffsetMs: this.judgmentOffsetMs,
+      beat: position.beat,
+      measure: position.measure,
+      beatInMeasure: position.beatInMeasure,
+      approachMs: settings.approachMs,
+      trackId: session?.track.metadata.id ?? null,
+      difficulty: session?.difficulty ?? null,
+      mode: session?.mode ?? null,
+      assisted: session?.assisted ?? false,
+      eventCursor: this.transport.cursorIndex,
+      scheduledCount: this.transport.scheduledCount,
+      liveVoices: this.synth.voiceCount,
+      liveEffects: this.sfx.liveCount,
+      visibleNotes: this.frame?.noteCount ?? 0,
+      particles: this.renderer.particleCount,
+      heldLanes: this.heldLanes,
+      heldKeys: LANES.filter((lane) => this.heldLanes[lane]).map((lane) => this.bindings.labelFor(lane)),
+      score: snapshot?.score ?? 0,
+      combo: snapshot?.combo ?? 0,
+      multiplier: snapshot?.multiplier ?? 1,
+      aura: snapshot?.aura ?? 0,
+      accuracy: snapshot?.accuracy ?? 0,
+      judgedCount: snapshot?.judgedCount ?? 0,
+      totalNotes: snapshot?.totalNotes ?? 0,
+      misses: snapshot?.misses ?? 0,
+      inputLog: this.inputLog,
+    };
+  }
+
+  /** The chart editor is developer tooling, reached from the debug overlay only. */
+  private openChartEditor(): void {
+    if (!DEBUG_ENABLED) return;
+    this.teardownSession();
+    if (this.router.can("CHART_EDITOR")) this.router.goTo("CHART_EDITOR");
+    else this.router.force("CHART_EDITOR");
+  }
+
+  private logInput(entry: InputLogEntry): void {
+    this.inputLog.push(entry);
+    if (this.inputLog.length > INPUT_LOG_SIZE) this.inputLog.shift();
   }
 
   /** Seeks, then walks the run forward without frames so a screenshot has state on screen. */
@@ -717,10 +989,12 @@ export class App implements AppApi {
     frame.reducedMotion = settings.reducedMotion;
     frame.highContrast = settings.highContrast;
     frame.flashEffects = settings.flashEffects;
-    frame.showBeatGrid = session.mode === "practice" ? settings.practiceBeatGrid : settings.showBeatGrid;
-    frame.showHitWindows = this.debugView;
-    frame.showNoteIds = this.debugView;
-    frame.showLaneBounds = this.debugView;
+    frame.showBeatGrid =
+      (session.mode === "practice" ? settings.practiceBeatGrid : settings.showBeatGrid) || this.debugFlags.beatGrid;
+    frame.showHitWindows = this.debugFlags.hitWindows;
+    frame.showNoteIds = this.debugFlags.noteIds;
+    frame.showLaneBounds = this.debugFlags.laneBounds;
+    frame.effectsEnabled = this.debugFlags.effects;
     frame.laneKeyLabels = settings.showHints ? this.bindings.laneLabels() : null;
     frame.ghostGuide = settings.ghostGuide && session.mode === "practice";
     frame.beatPhase = this.beatPhase(displayMs);
@@ -831,6 +1105,33 @@ export class App implements AppApi {
     this.transport.start();
     this.hud.setCountIn(practice.loopStartMs, this.beatMs());
     this.lastDisplayMs = null;
+  }
+
+  /** Loop range and speed, so closing the practice panel knows what moved. */
+  private practiceSignature(): string {
+    const practice = this.current?.practice;
+    if (!practice) return "";
+    return `${practice.loopStartMs}|${practice.loopEndMs}|${practice.loopEnabled}|${practice.rate}`;
+  }
+
+  /** Re-enters the loop after the practice panel changed the range or the speed. */
+  private restartPracticePass(): void {
+    const session = this.current;
+    const practice = session?.practice;
+    if (!session || !practice) return;
+    this.transport.setRate(this.effectiveRate());
+    this.transport.setLoop(practice.loopStartMs, practice.loopEnabled ? practice.loopEndMs : null);
+    this.seekTo(practice.entryMs());
+    session.game.skipBefore(practice.loopStartMs);
+    this.clock.resume();
+    this.transport.resume();
+    this.hud.setCountIn(practice.loopStartMs, this.beatMs());
+  }
+
+  /** Practice speed, halved again while the debug slow motion is on. */
+  private effectiveRate(): number {
+    const base = this.current?.practice?.rate ?? 1;
+    return this.debugFlags.slowMotion ? base * SLOW_MOTION_RATE : base;
   }
 
   private beatMs(): number {
@@ -1020,22 +1321,44 @@ export class App implements AppApi {
     const session = this.current;
     if (!session || !GAMEPLAY_STATES.has(this.router.state)) return;
     const songMs = this.clock.songMsAtAudioMs(this.engine.perfToAudioMs(perfTs));
-    session.game.press(lane, songMs);
+    const result = session.game.press(lane, songMs);
     this.lastPressDisplayMs[lane] = this.displayAt(songMs);
+    if (!DEBUG_ENABLED) return;
+    this.logInput({
+      lane,
+      laneName: LANE_IDENTITIES[lane].name,
+      kind: "press",
+      songMs,
+      perfTs,
+      deltaMs: result?.deltaMs ?? null,
+      judgment: result?.judgment ?? null,
+    });
   }
 
   private onLaneRelease(lane: Lane, perfTs: number): void {
     const session = this.current;
     if (!session || !GAMEPLAY_STATES.has(this.router.state)) return;
-    session.game.release(lane, this.clock.songMsAtAudioMs(this.engine.perfToAudioMs(perfTs)));
+    const songMs = this.clock.songMsAtAudioMs(this.engine.perfToAudioMs(perfTs));
+    session.game.release(lane, songMs);
+    if (!DEBUG_ENABLED) return;
+    this.logInput({
+      lane,
+      laneName: LANE_IDENTITIES[lane].name,
+      kind: "release",
+      songMs,
+      perfTs,
+      deltaMs: null,
+      judgment: null,
+    });
   }
 
   private onShortcut(action: ShortcutAction): void {
     const state = this.router.state;
     switch (action) {
       case "pause":
-        if (GAMEPLAY_STATES.has(state)) this.pause();
-        else if (state === "PAUSED") this.resume();
+        if (GAMEPLAY_STATES.has(state)) this.pause("menu");
+        // The practice panel has its own key; Escape there goes through the screen.
+        else if (state === "PAUSED" && this.pauseReasonValue === "menu") this.resume();
         return;
       case "restart":
         if (GAMEPLAY_STATES.has(state) || state === "PAUSED") this.restart();
@@ -1057,8 +1380,8 @@ export class App implements AppApi {
         // it go again.
         const session = this.current;
         if (session?.mode !== "practice") return;
-        if (state === "PRACTICE") this.pause();
-        else if (state === "PAUSED") this.resume();
+        if (state === "PRACTICE") this.pause("practice");
+        else if (state === "PAUSED" && this.pauseReasonValue === "practice") this.resume();
         return;
       }
     }
@@ -1169,6 +1492,9 @@ export class App implements AppApi {
     if (touched.has("highContrast")) document.body.classList.toggle("high-contrast", settings.highContrast);
     if (touched.has("reducedMotion")) document.body.classList.toggle("reduced-motion", settings.reducedMotion);
     if (touched.has("metronome")) this.transport.setMetronome(settings.metronome);
+    // The rate itself only moves at the next practice entry, which is what
+    // keeps a speed change out of the middle of a scheduled bar.
+    if (touched.has("practiceSpeed")) this.current?.practice?.setRate(settings.practiceSpeed);
     if (touched.has("unlockAll")) this.ui.refresh();
   }
 

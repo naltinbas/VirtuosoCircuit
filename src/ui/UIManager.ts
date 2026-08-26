@@ -66,18 +66,26 @@ export class UIManager {
   private readonly root: HTMLElement;
   private readonly api: AppApi;
   private readonly sounds: UISounds;
-  private readonly screens = new Map<GameState, Screen>();
+  private readonly screens = new Map<string, Screen>();
+  private readonly variantOf: (state: GameState) => string | null;
   private readonly nav: KeyboardNav;
   private current: Screen | null = null;
 
-  constructor(root: HTMLElement, api: AppApi, sounds: UISounds) {
+  constructor(
+    root: HTMLElement,
+    api: AppApi,
+    sounds: UISounds,
+    variantOf: (state: GameState) => string | null = () => null,
+  ) {
     this.root = root;
     this.api = api;
     this.sounds = sounds;
+    this.variantOf = variantOf;
     this.root.setAttribute("inert", "");
     this.nav = new KeyboardNav({
       container: () => this.current?.element ?? null,
-      enabled: () => !GAMEPLAY_STATES.has(this.api.router.state),
+      // A rebinding capture owns the keyboard until it takes a key.
+      enabled: () => !GAMEPLAY_STATES.has(this.api.router.state) && !this.api.keys.capturing,
       onEscape: () => this.handleEscape(),
       onMove: () => this.sounds.move(),
       onActivate: () => this.sounds.select(),
@@ -86,10 +94,15 @@ export class UIManager {
     this.nav.attach();
   }
 
-  register(state: GameState, screen: Screen): void {
-    this.screens.set(state, screen);
+  /**
+   * One screen per state, or per state and variant where a state has more than
+   * one face: PAUSED shows the pause menu or the practice panel depending on
+   * what stopped the run.
+   */
+  register(state: GameState, screen: Screen, variant?: string): void {
+    this.screens.set(variant === undefined ? state : `${state}:${variant}`, screen);
     screen.element.hidden = true;
-    screen.element.setAttribute("data-screen", state);
+    screen.element.setAttribute("data-screen", variant === undefined ? state : `${state}:${variant}`);
     this.root.append(screen.element);
   }
 
@@ -103,7 +116,10 @@ export class UIManager {
 
   /** Brings the screen for the current router state up and focuses into it. */
   sync(): void {
-    const next = this.screens.get(this.api.router.state) ?? null;
+    const state = this.api.router.state;
+    const variant = this.variantOf(state);
+    const next =
+      (variant === null ? undefined : this.screens.get(`${state}:${variant}`)) ?? this.screens.get(state) ?? null;
     if (this.current !== null && this.current !== next) {
       this.current.element.hidden = true;
       this.current.hide?.();
@@ -141,4 +157,181 @@ export class UIManager {
     if (!(target instanceof Element)) return;
     if (target.closest("[data-nav]") !== null) this.sounds.select();
   };
+}
+
+// ---------------------------------------------------------------------------
+// Form rows
+//
+// Settings, calibration and the practice panel are all the same shape: a
+// label, a control and sometimes a line of explanation. Building them here
+// keeps the ids, the label bindings and the keyboard behaviour identical
+// across every screen.
+// ---------------------------------------------------------------------------
+
+let fieldCounter = 0;
+
+function nextFieldId(prefix: string): string {
+  fieldCounter += 1;
+  return `${prefix}-${fieldCounter}`;
+}
+
+export interface FieldOptions {
+  label: string;
+  note?: string;
+  className?: string;
+}
+
+export interface FieldRowOptions extends FieldOptions {
+  /** The element the label points at, when the row wraps the control in a box. */
+  labelFor?: HTMLElement;
+}
+
+/** Wraps a control in a labelled row. */
+export function field(control: HTMLElement, options: FieldRowOptions): HTMLElement {
+  const target = options.labelFor ?? control;
+  const row = el("div", { className: options.className ?? "field" });
+  const label = el("label", { className: "field__label", text: options.label });
+  if (target.id === "") target.id = nextFieldId("field");
+  label.htmlFor = target.id;
+  row.append(label, control);
+  if (options.note !== undefined) row.append(el("p", { className: "field__note", text: options.note }));
+  return row;
+}
+
+export interface SliderOptions extends FieldOptions {
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  /** Text shown next to the slider and read out to assistive tech. */
+  format(value: number): string;
+  onInput(value: number): void;
+}
+
+export interface SliderField {
+  element: HTMLElement;
+  input: HTMLInputElement;
+  /** Moves the slider from outside, for example after a reset button. */
+  set(value: number): void;
+}
+
+export function sliderField(options: SliderOptions): SliderField {
+  const input = el("input", { className: "field__slider" });
+  input.type = "range";
+  input.min = `${options.min}`;
+  input.max = `${options.max}`;
+  input.step = `${options.step}`;
+  input.value = `${options.value}`;
+  input.setAttribute("data-nav", "");
+  const value = el("span", { className: "field__value", text: options.format(options.value) });
+  const wrap = el("div", { className: "field__control" });
+  wrap.append(input, value);
+  const write = (v: number): void => {
+    value.textContent = options.format(v);
+    input.setAttribute("aria-valuetext", value.textContent);
+  };
+  write(options.value);
+  input.addEventListener("input", () => {
+    const next = Number(input.value);
+    write(next);
+    options.onInput(next);
+  });
+  const element = field(wrap, {
+    label: options.label,
+    note: options.note,
+    className: "field field--slider",
+    labelFor: input,
+  });
+  return {
+    element,
+    input,
+    set(next: number): void {
+      input.value = `${next}`;
+      write(next);
+    },
+  };
+}
+
+export interface ToggleOptions extends FieldOptions {
+  checked: boolean;
+  onChange(checked: boolean): void;
+}
+
+export interface ToggleField {
+  element: HTMLElement;
+  input: HTMLInputElement;
+  set(checked: boolean): void;
+}
+
+export function toggleField(options: ToggleOptions): ToggleField {
+  const input = el("input", { className: "field__toggle" });
+  input.type = "checkbox";
+  input.checked = options.checked;
+  input.setAttribute("data-nav", "");
+  input.id = nextFieldId("toggle");
+  input.addEventListener("change", () => options.onChange(input.checked));
+  const element = field(input, { label: options.label, note: options.note, className: "field field--toggle" });
+  return {
+    element,
+    input,
+    set(checked: boolean): void {
+      input.checked = checked;
+    },
+  };
+}
+
+export interface Choice<T> {
+  label: string;
+  value: T;
+  /** Reason the choice cannot be picked, shown as a title and to assistive tech. */
+  disabledReason?: string;
+}
+
+export interface ChoiceOptions<T> extends FieldOptions {
+  choices: readonly Choice<T>[];
+  value: T;
+  onPick(value: T): void;
+}
+
+export interface ChoiceField<T> {
+  element: HTMLElement;
+  set(value: T): void;
+}
+
+/** A row of buttons behaving like radio buttons, for short option lists. */
+export function choiceField<T>(options: ChoiceOptions<T>): ChoiceField<T> {
+  const group = el("div", { className: "choice" });
+  group.setAttribute("role", "group");
+  group.setAttribute("aria-label", options.label);
+  const buttons: { value: T; node: HTMLButtonElement }[] = [];
+  for (const choice of options.choices) {
+    const node = button(choice.label, () => options.onPick(choice.value), { className: "choice__button" });
+    if (choice.disabledReason !== undefined) {
+      node.disabled = true;
+      node.title = choice.disabledReason;
+      node.removeAttribute("data-nav");
+      node.tabIndex = -1;
+    }
+    buttons.push({ value: choice.value, node });
+    group.append(node);
+  }
+  const mark = (value: T): void => {
+    for (const entry of buttons) {
+      const on = entry.value === value;
+      entry.node.setAttribute("aria-pressed", on ? "true" : "false");
+      entry.node.classList.toggle("is-active", on);
+    }
+  };
+  mark(options.value);
+  const row = el("div", { className: "field field--choice" });
+  row.append(el("span", { className: "field__label", text: options.label }), group);
+  if (options.note !== undefined) row.append(el("p", { className: "field__note", text: options.note }));
+  return { element: row, set: mark };
+}
+
+/** A titled block of rows. Screens are long, so every panel is grouped. */
+export function fieldset(legend: string, ...rows: HTMLElement[]): HTMLElement {
+  const group = el("section", { className: "panel-group" });
+  group.append(el("h3", { className: "panel-group__title", text: legend }), ...rows);
+  return group;
 }

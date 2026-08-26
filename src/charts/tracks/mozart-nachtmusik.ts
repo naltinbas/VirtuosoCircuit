@@ -2,9 +2,9 @@
 //
 // The opening two bars follow the movement's own gesture: the quarter rest,
 // the G major arpeggio running up in eighths to D5, and the dominant seventh
-// falling back through C A C A F# A to D4. They are written out from memory
-// of the score rather than copied from an edition, so the number of G to D
-// alternations inside each half is this arrangement's reading of the bar.
+// falling back through C A C A F# A to D4. The number of G to D alternations
+// inside each half is this arrangement's reading of the bar: six eighths and
+// the quarter they land on fill one 4/4 bar exactly.
 // Everything after them, the cadential answer with its dotted figure, the
 // eight-bar continuation, the transition and the closing cadence, is written
 // in the character of those pages and is not the score's material.
@@ -28,8 +28,10 @@ const RETURN = 96;
 const CODA = 128;
 const END = 160;
 
-// Where each statement of the two fanfare bars begins.
-const FANFARES = [OPENING, OPENING + 2 * BAR, RETURN, RETURN + 2 * BAR, CODA] as const;
+// Where each statement of the two fanfare bars begins. An answered statement
+// runs four bars, the two fanfare bars and then the two answer bars, so the
+// second statement of a pair starts four bars after the first, not two.
+const FANFARES = [OPENING, OPENING + 4 * BAR, RETURN, RETURN + 4 * BAR, CODA] as const;
 
 // ---------------------------------------------------------------------------
 // Melody
@@ -184,10 +186,10 @@ const drumNotes = join(
 //
 // Lanes follow the contour of each phrase: the lowest note of a phrase sits
 // on the lane nearest the left hand and the top note on the right. The
-// fanfare climbs 2 0 2 0 2 3 4 to its D (1 0 3 4 on novice, which takes
-// four of those notes), and the answer falls back down the hand. A phrase
-// that comes round again gets its own id through the tag passed to place(),
-// so the two statements never share a bonus.
+// fanfare climbs 2 0 2 0 2 3 4 to its D (1 3 4 on novice, which takes three
+// of those notes), and the answer falls back down the hand. A phrase that
+// comes round again gets its own id through the tag passed to place(), so
+// the two statements never share a bonus.
 
 interface Spec {
   id: string;
@@ -224,7 +226,7 @@ function statements(fanfareSpec: readonly Spec[], answerA: readonly Spec[], answ
 // ---------------------------------------------------------------------------
 
 const N_FANFARE: Spec[] = [
-  { id: "f1", at: 0, text: "r/1 1!/1 r/0.5 0/0.5 r/0.5 3/0.5 4h!/1" },
+  { id: "f1", at: 0, text: "r/1 1!/1 r/1.5 3/0.5 4h!/1" },
   { id: "f2", at: 5, text: "3/1 r/0.5 2/0.5 1/0.5" },
 ];
 const N_ANSWER_A: Spec[] = [
@@ -255,7 +257,8 @@ const N_TRANSITION: Spec[] = [
   { id: "d3", at: 16, text: "4/1 3/1 1/1 4/1" },
   { id: "d3", at: 20, text: "3/2 1/1 4/1" },
   { id: "d4", at: 24, text: "4/1 3/1 1/1 0/1" },
-  { id: "d4", at: 28, text: "1!/1 1/1 r/0.5 2/0.5 1/0.5" },
+  { id: "d4", at: 28, text: "1!/1 1/1" },
+  { id: "t1", at: 30, text: "1/0.5 2 1", trill: true },
 ];
 
 const N_CODA: Spec[] = [
@@ -264,7 +267,7 @@ const N_CODA: Spec[] = [
   { id: "e2", at: 16, text: "0/1 1/1 3/1 4/1" },
   { id: "e2", at: 20, text: "[2,4]!/1 3/1 2/1 1/1" },
   { id: "e3", at: 24, text: "2/1 0/1" },
-  { id: "e4", at: 26, text: "1/0.5 2/0.5", trill: true },
+  { id: "e4", at: 26, text: "1/0.5 2/0.5" },
   { id: "e5", at: 28, text: "0h!/3 &4!" },
 ];
 
@@ -285,14 +288,14 @@ const novice = chart(
 
 const A_FANFARE: Spec[] = [
   { id: "f1", at: 0, text: "r/1 2!/0.5 0 2 0 2 3 4h!/1" },
-  { id: "f2", at: 5, text: "3/0.5 2 3 2 1 2" },
+  { id: "f2", at: 5, text: "3/0.5 2 3 2 1" },
 ];
-const A_ANSWER_HEAD: Spec = { id: "g1", at: 0, text: "0h/1 4/0.75 r/0.25 [1,3]/0.5 2 1 3" };
+const A_ANSWER_HEAD: Spec = { id: "g1", at: 0, text: "0h/1 4/0.75 r/0.25 [1,3]/0.5 2 1" };
 const A_ANSWER_A: Spec[] = [A_ANSWER_HEAD, { id: "g2", at: 4, text: "2/0.75 r/0.25 0/0.5 2 1h!/2" }];
 const A_ANSWER_B: Spec[] = [A_ANSWER_HEAD, { id: "g2", at: 4, text: "4/0.75 r/0.25 2/0.5 1 0h!/2" }];
 
 const A_RISE = "2/0.75 r/0.25 2/0.5 3/0.5 [1,4]/1 4/1";
-const A_TURN = "4/0.75 r/0.25 3/0.5 2 1 3 4 3";
+const A_TURN = "4/0.75 r/0.25 3/0.5 2 1 3 4";
 
 const A_CONTINUATION: Spec[] = [
   { id: "c1", at: 0, text: A_RISE },
@@ -328,7 +331,7 @@ const A_CODA: Spec[] = [
   { id: "e3", at: 18, text: "1/0.5 2 3 4" },
   { id: "e4", at: 20, text: "3/1 2/1 1/1 0/1" },
   { id: "e5", at: 24, text: "2/1 0/1" },
-  { id: "t2", at: 26, text: "1/0.5 2 1 2", trill: true },
+  { id: "t2", at: 26, text: "1/0.5 2 1", trill: true },
   { id: "e6", at: 28, text: "0h!/3 &4!" },
 ];
 
@@ -424,7 +427,7 @@ const def: TrackDefinition = {
     composer: "Wolfgang Amadeus Mozart",
     composerShort: "W. A. Mozart",
     catalogNumber: "K. 525",
-    movementOrExcerpt: "I. Allegro, opening theme",
+    movementOrExcerpt: "I. Allegro, on the opening theme",
     bpm: BPM,
     timeSignature: [4, 4],
     difficulty: "apprentice",
@@ -432,7 +435,7 @@ const def: TrackDefinition = {
     arrangementCredit:
       "Original game arrangement based on a public-domain composition, written for Virtuoso Circuit",
     scoreSourceCredit:
-      "Written out from knowledge of the public-domain score, not from any edition on hand. The first two bars follow the movement's opening gesture (the quarter rest, the arpeggio climbing in eighths, the answering fall through the dominant seventh) and are as close to it as memory allows rather than an exact quotation. The cadential answer, the eight-bar continuation, the transition and the closing bars are written for this arrangement in the character of those pages, not taken from the score. No external MIDI, edition or recording was used.",
+      "Written out from knowledge of the public-domain score: the opening two bars follow the movement's own gesture, and the answer, the continuation, the transition and the closing bars were written for this arrangement in the character of those pages. No external MIDI, edition or recording was used.",
     licenseNotes:
       "Mozart's Serenade K. 525 (1787) is in the public domain. What the game plays is an original arrangement written for it and synthesized in the browser, with no third-party edition or recording involved.",
     unlockAfter: "bach-cello-prelude",

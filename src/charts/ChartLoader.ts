@@ -88,8 +88,10 @@ export function compileChart(beatChart: BeatChart, mapper: BeatMapper): Compiled
   const events: ChartEvent[] = beatChart.events.map((ev, i) => {
     const type = inferEventType(ev);
     const timeMs = mapper.beatToMs(ev.beat);
-    const durationMs =
-      type === "hold" && ev.durationBeats ? mapper.beatToMs(ev.beat + ev.durationBeats) - timeMs : 0;
+    // An authored duration is carried through whatever the event turned out to
+    // be. Only a hold is allowed to have one, and the validator says so, which
+    // it can only do if the duration survives compilation.
+    const durationMs = ev.durationBeats ? mapper.beatToMs(ev.beat + ev.durationBeats) - timeMs : 0;
     const out: ChartEvent = {
       id: `${prefix}${i}`,
       timeMs,

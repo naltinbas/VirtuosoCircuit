@@ -96,7 +96,7 @@ export function validateChart(
       if (e.lanes.length > limits.maxChordSize) {
         push("error", "chord-size", `chord ${e.id} has ${e.lanes.length} lanes, limit ${limits.maxChordSize}`, e.id);
       }
-      if (e.durationMs > 0) push("error", "chord-hold", `chord ${e.id} cannot also be a hold`, e.id);
+      if (e.durationMs !== 0) push("error", "chord-hold", `chord ${e.id} cannot also be a hold`, e.id);
     } else if (e.type === "hold") {
       if (e.lanes.length !== 1) push("error", "hold-lanes", `hold ${e.id} must use exactly one lane`, e.id);
       if (e.durationMs < limits.minHoldMs) {
@@ -104,7 +104,7 @@ export function validateChart(
       }
     } else {
       if (e.lanes.length !== 1) push("error", "single-lanes", `single ${e.id} must use exactly one lane`, e.id);
-      if (e.durationMs > 0) push("error", "single-duration", `single ${e.id} has a duration`, e.id);
+      if (e.durationMs !== 0) push("error", "single-duration", `single ${e.id} has a duration`, e.id);
     }
     if (!alignedToMusic(e.timeMs)) {
       push(

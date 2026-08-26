@@ -74,6 +74,26 @@ describe("validateChart", () => {
     const c = compileChart({ difficulty: "novice", events: [{ beat: 4, lanes: [0] }, { beat: 0, lanes: [1] }] }, mapper);
     expect(codes(validateChart(c, track))).toContain("unsorted");
   });
+  it("flags a chord and a single that carry a duration", () => {
+    const held = compileChart({ difficulty: "novice", events: [{ beat: 0, lanes: [0, 2], durationBeats: 2 }] }, mapper);
+    expect(held.events[0].type).toBe("chord");
+    expect(held.events[0].durationMs).toBeGreaterThan(0);
+    expect(codes(validateChart(held, track))).toContain("chord-hold");
+    const single = compileChart(
+      { difficulty: "novice", events: [{ beat: 0, lanes: [1], type: "single", durationBeats: 2 }] },
+      mapper,
+    );
+    expect(codes(validateChart(single, track))).toContain("single-duration");
+  });
+  it("flags a negative duration on a chord and on a single", () => {
+    const chord = compileChart({ difficulty: "novice", events: [{ beat: 4, lanes: [0, 2], durationBeats: -2 }] }, mapper);
+    expect(codes(validateChart(chord, track))).toContain("chord-hold");
+    const single = compileChart(
+      { difficulty: "novice", events: [{ beat: 4, lanes: [1], type: "single", durationBeats: -2 }] },
+      mapper,
+    );
+    expect(codes(validateChart(single, track))).toContain("single-duration");
+  });
   it("warns on split chords and tiny phrases", () => {
     const c = compileChart({ difficulty: "novice", events: [{ beat: 0, lanes: [0], phraseId: "x" }, { beat: 0, lanes: [3] }] }, mapper);
     const issues = validateChart(c, track);

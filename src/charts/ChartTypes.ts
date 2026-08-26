@@ -147,7 +147,7 @@ export interface ChartEvent {
   timeMs: number;
   type: EventType;
   lanes: Lane[];
-  /** 0 for singles and chords. */
+  /** 0 for singles and chords; anything else on one of those is a validation error. */
   durationMs: number;
   phraseId?: string;
   accent?: boolean;

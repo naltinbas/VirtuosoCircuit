@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AudioClock } from "../src/audio/AudioClock";
 import { AudioEngine } from "../src/audio/AudioEngine";
 import { AUDIO } from "../src/app/Config";
+import { frameTimeAverage } from "../src/utils/TimeUtils";
 
 /** Just enough of a GainNode for the engine's graph and gain ramps. */
 function fakeGain(): GainNode {
@@ -123,5 +124,35 @@ describe("AudioEngine silent mode", () => {
     perfMs = 4500;
     expect(engine.nowMs()).toBe(4500);
     expect(engine.perfToAudioMs(perfMs)).toBe(4500);
+  });
+});
+
+describe("frame timing", () => {
+  it("reports the wall clock time of the last frame sample", () => {
+    let perfMs = 1000;
+    const engine = new AudioEngine({ createContext: () => null, now: () => perfMs });
+    engine.sampleClock();
+    const first = engine.sampledPerfMs;
+    perfMs = 1157;
+    engine.sampleClock();
+    // The gap between two frames is real time, whatever the offset does.
+    expect(engine.sampledPerfMs - first).toBe(157);
+  });
+
+  it("averages frame times past the clamp the visual effects use", () => {
+    let averageMs = 16;
+    for (let i = 0; i < 300; i++) {
+      averageMs = frameTimeAverage(averageMs, 157, AUDIO.maxFrameSampleMs);
+    }
+    expect(averageMs).toBeCloseTo(157, 3);
+    expect(averageMs).toBeGreaterThan(AUDIO.maxFrameDeltaMs);
+    expect(1000 / averageMs).toBeLessThan(7);
+  });
+
+  it("drops a stretch where the page was not rendering", () => {
+    expect(frameTimeAverage(16, 5000, AUDIO.maxFrameSampleMs)).toBe(16);
+    expect(frameTimeAverage(16, 0, AUDIO.maxFrameSampleMs)).toBe(16);
+    expect(frameTimeAverage(16, -20, AUDIO.maxFrameSampleMs)).toBe(16);
+    expect(frameTimeAverage(16, 26, AUDIO.maxFrameSampleMs)).toBeCloseTo(17, 6);
   });
 });

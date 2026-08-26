@@ -45,6 +45,7 @@ import { SettingsPanel } from "../ui/SettingsPanel";
 import { TrackSelect } from "../ui/TrackSelect";
 import { UIManager } from "../ui/UIManager";
 import { clamp } from "../utils/MathUtils";
+import { frameTimeAverage } from "../utils/TimeUtils";
 import { AUDIO, DEBUG_ENABLED, HIGHWAY, LANE_IDENTITIES, type Judgment } from "./Config";
 import { GAMEPLAY_STATES, type GameState, type PlayMode } from "./GameState";
 import { PANEL_STATES, pathTo, Router } from "./Router";
@@ -323,6 +324,7 @@ export class App implements AppApi {
   private judgmentOffsetMs = 0;
   private lastDisplayMs: number | null = null;
   private lastFrameAudioMs: number | null = null;
+  private lastFramePerfMs: number | null = null;
   private fps = 60;
   private frameMs = 16;
   private seed = 1;
@@ -1002,8 +1004,15 @@ export class App implements AppApi {
     const wallDeltaMs =
       this.lastFrameAudioMs === null ? 0 : clamp(frameAudioMs - this.lastFrameAudioMs, 0, AUDIO.maxFrameDeltaMs);
     this.lastFrameAudioMs = frameAudioMs;
-    this.frameMs = this.frameMs * 0.9 + wallDeltaMs * 0.1;
-    this.fps = this.frameMs > 0 ? 1000 / this.frameMs : 0;
+    // The overlay reports what a frame really cost, so it measures the wall
+    // clock instead of the delta the effects are clamped to; a dropped frame
+    // worse than that clamp is the one worth seeing.
+    const framePerfMs = this.engine.sampledPerfMs;
+    if (this.lastFramePerfMs !== null) {
+      this.frameMs = frameTimeAverage(this.frameMs, framePerfMs - this.lastFramePerfMs, AUDIO.maxFrameSampleMs);
+      this.fps = this.frameMs > 0 ? 1000 / this.frameMs : 0;
+    }
+    this.lastFramePerfMs = framePerfMs;
 
     const settings = this.settings.current;
     const session = this.current;

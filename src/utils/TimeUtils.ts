@@ -29,3 +29,14 @@ export function formatScore(v: number): string {
 export function perfNowMs(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
+
+/**
+ * Rolling average of real frame times for the performance overlay. A sample
+ * longer than maxSampleMs is a gap where the page was not rendering at all (a
+ * hidden tab, a resume), which is not a frame time, so it is dropped rather
+ * than folded into the average for the next forty frames.
+ */
+export function frameTimeAverage(averageMs: number, sampleMs: number, maxSampleMs: number): number {
+  if (!(sampleMs > 0) || sampleMs > maxSampleMs) return averageMs;
+  return averageMs * 0.9 + sampleMs * 0.1;
+}

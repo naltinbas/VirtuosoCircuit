@@ -177,6 +177,14 @@ export class AudioEngine implements AudioGraph {
     return perf + this.offsetMs;
   }
 
+  /**
+   * Performance-clock time of the last sampleClock(). The frame loop measures
+   * what a frame really cost with it, without reading the clock itself.
+   */
+  get sampledPerfMs(): number {
+    return this.lastSamplePerfMs;
+  }
+
   nowMs(): number {
     this.sampleIfStale();
     const ctx = this.audioContext();

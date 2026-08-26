@@ -302,6 +302,8 @@ export const AUDIO = {
   lateNoteDropMs: 50,
   /** Cap on frame delta used by visual effects after a tab switch. */
   maxFrameDeltaMs: 100,
+  /** A frame gap longer than this is a stretch with no rendering, so the performance overlay ignores it. */
+  maxFrameSampleMs: 1000,
   /** How long unlock() waits for the AudioContext to run before falling back to silent mode. */
   unlockTimeoutMs: 500,
   /** Polyphony cap; the oldest voice is stolen beyond it. */

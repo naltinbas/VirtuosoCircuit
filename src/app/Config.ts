@@ -202,6 +202,8 @@ export const HIGHWAY = {
   freezeWarmupMs: 1500,
   /** How early the practice ghost guide shows the upcoming key. */
   ghostLeadMs: 300,
+  /** How long autoplay keeps a lane down for a note that is not a hold. */
+  autoplayTapMs: 60,
 } as const;
 
 /** Highway geometry as fractions of the canvas (px values are CSS pixels). */

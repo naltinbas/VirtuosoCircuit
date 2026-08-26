@@ -9,6 +9,35 @@ describe("catalog tracks", () => {
   it("loads the catalog", () => {
     expect(Array.isArray(TRACK_DEFINITIONS)).toBe(true);
   });
+
+  // A gate that names a track this build does not have seals that track and
+  // everything behind it, and nothing in validateTrack can see it: it is
+  // handed one definition at a time.
+  describe("the unlock chain", () => {
+    const byOrder = [...TRACK_DEFINITIONS].sort((a, b) => a.metadata.order - b.metadata.order);
+    const metas = byOrder.map((d) => d.metadata);
+
+    it("gives every track its own id and its own order", () => {
+      expect(new Set(metas.map((m) => m.id)).size).toBe(metas.length);
+      expect(new Set(metas.map((m) => m.order)).size).toBe(metas.length);
+    });
+
+    it("names a track that is in the catalog", () => {
+      const ids = new Set(metas.map((m) => m.id));
+      for (const m of metas) {
+        if (m.unlockAfter === undefined) continue;
+        expect(ids.has(m.unlockAfter), `${m.id} unlocks after "${m.unlockAfter}"`).toBe(true);
+      }
+    });
+
+    it("opens the first three and gates each later track on the one before it", () => {
+      for (let i = 0; i < metas.length; i++) {
+        const m = metas[i];
+        if (m.order <= 3) expect(m.unlockAfter, m.id).toBeUndefined();
+        else expect(m.unlockAfter, m.id).toBe(metas[i - 1]?.id);
+      }
+    });
+  });
   for (const def of TRACK_DEFINITIONS) {
     describe(def.metadata.id, () => {
       const track = getTrack(def.metadata.id);

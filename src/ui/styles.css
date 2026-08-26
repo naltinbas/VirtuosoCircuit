@@ -1067,3 +1067,107 @@ body.reduced-motion .hud__message.is-flash {
   margin-top: 0.15rem;
   color: var(--amber);
 }
+
+/* ----------------------------------------------------------------- debug */
+
+.debug {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: min(360px, 42vw);
+  max-height: calc(100% - 16px);
+  overflow-y: auto;
+  padding: 0.6rem 0.7rem;
+  background: rgba(4, 8, 26, 0.92);
+  border: 1px solid var(--edge-strong);
+  border-radius: 10px;
+  color: var(--ivory);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.4;
+  pointer-events: auto;
+  z-index: 5;
+}
+
+.debug[hidden] {
+  display: none;
+}
+
+.debug__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.debug__title {
+  margin: 0;
+  font-size: 1.05em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal-soft);
+}
+
+.debug__hint {
+  color: var(--muted);
+}
+
+.debug__grid {
+  display: grid;
+  grid-template-columns: 9em 1fr;
+  gap: 0 0.6rem;
+  margin: 0.4rem 0;
+}
+
+.debug__grid dt {
+  color: var(--muted);
+}
+
+.debug__grid dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.debug__section {
+  margin: 0.6rem 0 0.2rem;
+  font-size: 1em;
+  color: var(--teal-soft);
+}
+
+.debug__log,
+.debug__issues {
+  margin: 0;
+  padding-left: 1.2em;
+  color: var(--muted);
+}
+
+.debug__ok {
+  margin: 0;
+  color: var(--teal-soft);
+}
+
+.debug__bad {
+  margin: 0;
+  color: var(--danger);
+}
+
+.debug__empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.debug__toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.debug__toggle {
+  cursor: pointer;
+}
+
+.debug__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}

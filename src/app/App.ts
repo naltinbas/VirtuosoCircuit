@@ -35,6 +35,7 @@ import { Hud } from "../ui/Hud";
 import { CalibrationPanel } from "../ui/CalibrationPanel";
 import { ControlsPanel } from "../ui/ControlsPanel";
 import { CreditsPanel } from "../ui/CreditsPanel";
+import { DebugOverlay } from "../ui/DebugOverlay";
 import { MainMenu } from "../ui/MainMenu";
 import { PauseMenu } from "../ui/PauseMenu";
 import { PracticePanel } from "../ui/PracticePanel";
@@ -291,6 +292,7 @@ export class App implements AppApi {
   private readonly ui: UIManager;
   private readonly hud: Hud;
 
+  private debugOverlay: DebugOverlay | null = null;
   private trackCache: TrackChart[] | null = null;
   private current: Session | null = null;
   private results: ResultsData | null = null;
@@ -454,6 +456,11 @@ export class App implements AppApi {
     this.ui.register("CALIBRATION", new CalibrationPanel(this));
     this.ui.register("CREDITS", new CreditsPanel(this));
 
+    if (this.debug !== null) {
+      this.debugOverlay = new DebugOverlay(this, this.debug);
+      this.root.append(this.debugOverlay.element);
+    }
+
     this.applySettings(this.settings.current);
     this.settings.on("change", ({ settings, changed }) => this.onSettingsChanged(settings, changed));
     this.save.on("change", () => this.ui.refresh());
@@ -492,6 +499,7 @@ export class App implements AppApi {
     this.cancelDwell();
     this.teardownSession();
     this.input.detach();
+    this.debugOverlay?.destroy();
     this.ui.destroy();
     this.renderer.destroy();
   }
@@ -802,6 +810,7 @@ export class App implements AppApi {
   private setDebugView(on: boolean): void {
     this.debugView = on && DEBUG_ENABLED;
     this.hud.setShowDelta(this.debugView);
+    this.debugOverlay?.setVisible(this.debugView);
   }
 
   private setDebugFlag(flag: keyof DebugFlags, on: boolean): void {

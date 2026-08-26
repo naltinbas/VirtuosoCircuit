@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { PANEL_STATES, Router, TRANSITIONS } from "../src/app/Router";
+import { PANEL_STATES, pathTo, Router, TRANSITIONS } from "../src/app/Router";
 import type { GameState } from "../src/app/GameState";
 
 function router(initial: GameState = "MAIN_MENU"): Router {
@@ -201,5 +201,39 @@ describe("panel states", () => {
     expect(r.state).toBe("PAUSED");
     expect(r.resumeState).toBe("PLAYING");
     expect(r.can("PLAYING")).toBe(true);
+  });
+});
+
+describe("pathTo", () => {
+  it("reaches the loading screen from every state without an illegal move", () => {
+    for (const from of ALL_STATES) {
+      const nav = router(from);
+      const path = pathTo(from, "LOADING_TRACK");
+      // A walk that has arrived is empty, which is the loading screen itself.
+      if (from !== "LOADING_TRACK") expect(path.length, `no route from ${from}`).toBeGreaterThan(0);
+      for (const step of path) nav.goTo(step);
+      expect(nav.state, `walk from ${from}`).toBe("LOADING_TRACK");
+    }
+  });
+
+  it("walks a panel out through the menu and an outcome through its results", () => {
+    expect(pathTo("CALIBRATION", "LOADING_TRACK")).toEqual(["MAIN_MENU", "TRACK_SELECT", "LOADING_TRACK"]);
+    expect(pathTo("TRACK_COMPLETE", "LOADING_TRACK")).toEqual(["RESULTS", "LOADING_TRACK"]);
+    expect(pathTo("PERFORMANCE_INTERRUPTED", "LOADING_TRACK")).toEqual(["RESULTS", "LOADING_TRACK"]);
+  });
+
+  it("ends with the target and never revisits the state it started in", () => {
+    for (const from of ALL_STATES) {
+      for (const to of ALL_STATES) {
+        const path = pathTo(from, to);
+        if (from === to) {
+          expect(path).toEqual([]);
+          continue;
+        }
+        expect(path[path.length - 1]).toBe(to);
+        expect(path).not.toContain(from);
+        expect(new Set(path).size).toBe(path.length);
+      }
+    }
   });
 });

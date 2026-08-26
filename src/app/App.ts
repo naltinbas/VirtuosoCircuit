@@ -47,7 +47,7 @@ import { UIManager } from "../ui/UIManager";
 import { clamp } from "../utils/MathUtils";
 import { AUDIO, DEBUG_ENABLED, HIGHWAY, LANE_IDENTITIES, type Judgment } from "./Config";
 import { GAMEPLAY_STATES, type GameState, type PlayMode } from "./GameState";
-import { PANEL_STATES, Router } from "./Router";
+import { PANEL_STATES, pathTo, Router } from "./Router";
 
 export interface Session {
   track: TrackChart;
@@ -589,12 +589,9 @@ export class App implements AppApi {
 
   /** Walks to LOADING_TRACK the legal way, wherever the request came from. */
   private enterLoading(): void {
-    if (this.router.state === "LOADING_TRACK") return;
-    // A finished run leaves through its results screen; every other screen
-    // that cannot load a track directly can reach track select.
-    if (!this.router.can("LOADING_TRACK") && this.router.can("RESULTS")) this.router.goTo("RESULTS");
-    if (!this.router.can("LOADING_TRACK")) this.router.goTo("TRACK_SELECT");
-    this.router.goTo("LOADING_TRACK");
+    // A panel reaches the loading screen through the menu, a finished run
+    // through its results screen, and most states through track select.
+    for (const step of pathTo(this.router.state, "LOADING_TRACK")) this.router.goTo(step);
   }
 
   /** The practice panel is a pause too, which is what picks the screen shown. */

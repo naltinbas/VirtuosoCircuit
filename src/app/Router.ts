@@ -36,6 +36,31 @@ export const TRANSITIONS: Record<GameState, readonly GameState[]> = {
   CHART_EDITOR: ["MAIN_MENU", "LOADING_TRACK"],
 };
 
+/**
+ * The states to move through to reach `to`, ending with it, along the shortest
+ * legal route. Empty when the walk is already over or there is no route.
+ */
+export function pathTo(from: GameState, to: GameState): GameState[] {
+  if (from === to) return [];
+  const cameFrom = new Map<GameState, GameState>();
+  const queue: GameState[] = [from];
+  while (queue.length > 0) {
+    const current = queue.shift() as GameState;
+    for (const next of TRANSITIONS[current]) {
+      if (next === from || cameFrom.has(next)) continue;
+      cameFrom.set(next, current);
+      if (next !== to) {
+        queue.push(next);
+        continue;
+      }
+      const path: GameState[] = [];
+      for (let step: GameState = to; step !== from; step = cameFrom.get(step) as GameState) path.unshift(step);
+      return path;
+    }
+  }
+  return [];
+}
+
 /** Screens that open over whatever asked for them and return there. */
 export const PANEL_STATES: ReadonlySet<GameState> = new Set(["SETTINGS", "CALIBRATION", "CONTROLS", "CREDITS"]);
 

@@ -104,6 +104,11 @@ body {
 .screen--menu {
   width: min(640px, 92vw);
   text-align: center;
+  /* The reset dialog is fixed to the viewport. A backdrop-filter on an
+     ancestor would make this card the dialog's containing block, so the menu
+     card goes without one; it sits over the idle backdrop, where the blur is
+     barely visible anyway. */
+  backdrop-filter: none;
 }
 
 .screen--pause {

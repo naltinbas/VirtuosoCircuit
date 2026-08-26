@@ -475,6 +475,13 @@ export class RhythmGame {
     this.finishedFlag = true;
     this.completedFlag = completed;
     this.failedFlag = !completed;
+    // update() is a no-op from here, so a running surge would never reach its
+    // own end. The flags are already set, which keeps a surgeEnd listener from
+    // starting another one.
+    if (this.aura.surgeActive) {
+      this.aura.cancelSurge();
+      this.events.emit("surgeEnd", { songMs: this.lastSongMs - this.offsetMs });
+    }
     this.events.emit(completed ? "complete" : "fail", { songMs: this.lastSongMs });
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACCURACY_WEIGHTS, AURA_CONFIG, JUDGMENT_WINDOWS_MS, SCORE_CONFIG } from "../src/app/Config";
+import { ACCURACY_WEIGHTS, AURA_CONFIG, HIGHWAY, JUDGMENT_WINDOWS_MS, SCORE_CONFIG } from "../src/app/Config";
 import type { Judgment, Seal } from "../src/app/Config";
 import { ScoreSystem, timingHistogram } from "../src/gameplay/ScoreSystem";
 import type { EventSpec } from "./gamefixtures";
@@ -415,5 +415,33 @@ describe("the end of a run", () => {
     expect(names).toEqual(["judgment:miss:e1L0", "auraWarning", "holdEnd", "fail"]);
     expect(game.summary().earlyReleases).toBe(0);
     expect(game.snapshot().holdingLanes[1]).toBe(false);
+  });
+});
+
+describe("a run that ends during a Focus Surge", () => {
+  it("ends a running Focus Surge when the track completes", () => {
+    const game = gameFor([{ timeMs: 1000, lanes: [0] }], { durationMs: 40000 });
+    const names = collectNames(game, ["surgeStart", "surgeEnd", "complete"]);
+    game.update(39000);
+    game.debugSetAura(AURA_CONFIG.max);
+    expect(game.activateFocusSurge(39000)).toBe(true);
+    game.update(40000 + HIGHWAY.outroMs);
+    expect(names).toEqual(["surgeStart", "surgeEnd", "complete"]);
+    expect(game.snapshot().surgeActive).toBe(false);
+    expect(game.snapshot().surgeRemainingMs).toBe(0);
+  });
+
+  it("ends a running Focus Surge when the run fails", () => {
+    const game = gameFor(laneRun(2, 1000, 300), { durationMs: 40000 });
+    const names = collectNames(game, ["surgeStart", "surgeEnd", "fail"]);
+    game.debugSetAura(AURA_CONFIG.max);
+    game.update(900);
+    expect(game.activateFocusSurge(900)).toBe(true);
+    // One miss from empty, so the note at 1000 ends the run mid surge.
+    game.debugSetAura(-AURA_CONFIG.miss);
+    game.update(1000 + JUDGMENT_WINDOWS_MS.miss + 1);
+    expect(names).toEqual(["surgeStart", "surgeEnd", "fail"]);
+    expect(game.snapshot().surgeActive).toBe(false);
+    expect(game.snapshot().surgeRemainingMs).toBe(0);
   });
 });

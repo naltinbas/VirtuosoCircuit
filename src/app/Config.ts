@@ -216,8 +216,20 @@ export const LAYOUT = {
   pastGateFraction: 0.15,
   popupRisePx: 48,
   popupLifeMs: 700,
+  /** Ramp at the start of a judgment popup, so a burst of hits does not blink. */
+  popupFadeInMs: 60,
   burstLifeMs: 450,
   keyLabelOffsetPx: 28,
+  /** Lane column flash after a hit. Every flash stays above 250 ms so nothing strobes. */
+  laneFlashMs: 320,
+  /** Receptor light decay after a lane key press. */
+  receptorFlashMs: 280,
+  /** Screen edge pulse on a Perfect Passage. */
+  edgePulseMs: 520,
+  /** One sweep of the Focus Surge band from the gate to the spawn edge. */
+  surgeSweepMs: 900,
+  /** Ramp of the low aura vignette when the warning starts. */
+  vignetteFadeMs: 300,
 } as const;
 
 export const PRACTICE_SPEEDS: readonly number[] = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0];

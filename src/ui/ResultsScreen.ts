@@ -37,6 +37,12 @@ export class ResultsScreen implements Screen {
     this.buildActions(data);
   }
 
+  /** Escape leaves for track select, the same exit the button on screen takes. */
+  onEscape(): boolean {
+    this.app.exitToTrackSelect();
+    return true;
+  }
+
   private header(data: ResultsData): HTMLElement {
     const meta = data.track.metadata;
     const header = el("header", { className: "results__header" });

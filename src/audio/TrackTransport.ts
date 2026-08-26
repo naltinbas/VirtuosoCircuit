@@ -126,9 +126,10 @@ export class TrackTransport extends EventEmitter<TransportEvents> {
     this.resync();
   }
 
+  /** An end at or before the start is no loop: the scheduler keeps running to the end of the track. */
   setLoop(startMs: number, endMs: number | null): void {
     this.loopStartMs = startMs;
-    this.loopEndMs = endMs;
+    this.loopEndMs = endMs !== null && endMs > startMs ? endMs : null;
     this.loopFired = false;
   }
 

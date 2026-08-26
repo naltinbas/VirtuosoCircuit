@@ -179,6 +179,22 @@ describe("TrackTransport", () => {
     expect(loops).toEqual([300]);
   });
 
+  it("ignores a loop whose end is not after its start", () => {
+    const r = rig([note(0), note(100), note(260), note(400)]);
+    const loops: number[] = [];
+    r.transport.on("loop", (payload) => loops.push(payload.songMs));
+    r.transport.setLoop(250, 250);
+    expect(r.transport.loopEnd).toBeNull();
+    r.clock.start(0);
+    r.transport.tick();
+    r.advance(300);
+    r.transport.tick();
+    // Nothing wraps a zero-length loop, so the scheduler has to keep feeding
+    // the synth instead of latching on the loop end and going quiet.
+    expect(loops).toEqual([]);
+    expect(r.synth.calls.map((c) => c.timeMs)).toEqual([0, 100, 260, 400]);
+  });
+
   it("re-triggers a note that is still sounding at a seek target", () => {
     const r = rig([note(0, 4000), note(900, 100), note(3000, 100)]);
     r.clock.start(0);

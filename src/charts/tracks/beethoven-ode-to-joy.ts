@@ -310,7 +310,7 @@ const def: TrackDefinition = {
     timeSignature: [4, 4],
     difficulty: "novice",
     arrangementStyle: "Orchestra-synth anthem: strings and organ over bass, light kick and snare on the last statement",
-    arrangementCredit: "Original game arrangement for Virtuoso Circuit (synthesized in the browser)",
+    arrangementCredit: "Original game arrangement based on a public-domain composition, written for Virtuoso Circuit",
     scoreSourceCredit:
       "Condensed from the public-domain score of the finale: the 16-bar theme in D major transcribed for this project and stated three times with a short closing cadence, no external MIDI or recording used",
     licenseNotes:

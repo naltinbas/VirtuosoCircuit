@@ -83,3 +83,28 @@ describe("catalog tracks", () => {
     });
   }
 });
+
+// The library screen and the licence manifest both print these strings, so
+// they have to read the same way on every card.
+describe("catalog credits", () => {
+  const EXPECTED_ARRANGEMENT =
+    "Original game arrangement based on a public-domain composition, written for Virtuoso Circuit";
+  it("uses one arrangement credit for every track", () => {
+    for (const def of TRACK_DEFINITIONS) {
+      expect(def.metadata.arrangementCredit, def.metadata.id).toBe(EXPECTED_ARRANGEMENT);
+    }
+  });
+  it("says in every source credit that nothing external was used", () => {
+    for (const def of TRACK_DEFINITIONS) {
+      const credit = def.metadata.scoreSourceCredit.toLowerCase();
+      expect(credit, def.metadata.id).toMatch(/no (external |)(midi|recording)/);
+    }
+  });
+  it("only gates unlocks on tracks that ship", () => {
+    const ids = new Set(TRACK_DEFINITIONS.map((d) => d.metadata.id));
+    for (const def of TRACK_DEFINITIONS) {
+      const gate = def.metadata.unlockAfter;
+      if (gate !== undefined) expect(ids.has(gate), `${def.metadata.id} needs ${gate}`).toBe(true);
+    }
+  });
+});

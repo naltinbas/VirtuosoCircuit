@@ -3,7 +3,7 @@
 //
 // Every effect ages on display time, so a frozen frame draws the same pixels
 // each time and a pause does not fast forward a popup. Particles come from an
-// ObjectPool and integrate on the frame delta, which is zero while frozen.
+// ObjectPool and fly a ballistic path from where and when they were thrown.
 // Nothing here fades faster than 250 ms and every flash obeys flashEffects.
 
 import { LAYOUT, type Judgment } from "../app/Config";
@@ -35,11 +35,16 @@ interface Popup {
 }
 
 interface Spark {
-  x: number;
-  y: number;
-  /** Velocity in CSS pixels per ms. */
+  /** Where the burst left the gate, in CSS pixels. */
+  x0: number;
+  y0: number;
+  /** Velocity at that moment, in CSS pixels per ms. */
   vx: number;
   vy: number;
+  /** Corrected song time of the judgment that threw it; the age is displayMs minus this. */
+  spawnSongMs: number;
+  x: number;
+  y: number;
   ageMs: number;
   lifeMs: number;
   size: number;
@@ -60,9 +65,10 @@ export class EffectRenderer {
     12,
   );
   private readonly sparkPool = new ObjectPool<Spark>(
-    () => ({ x: 0, y: 0, vx: 0, vy: 0, ageMs: 0, lifeMs: 0, size: 1, color: "#ffffff" }),
+    () => ({ x0: 0, y0: 0, vx: 0, vy: 0, spawnSongMs: 0, x: 0, y: 0, ageMs: 0, lifeMs: 0, size: 1, color: "#ffffff" }),
     (spark) => {
       spark.ageMs = 0;
+      spark.spawnSongMs = 0;
     },
     SCENE.burstParticles * 4,
   );
@@ -177,7 +183,7 @@ export class EffectRenderer {
     this.warningActive = false;
   }
 
-  update(frame: RenderFrame, deltaMs: number): void {
+  update(frame: RenderFrame): void {
     this.allowEffects = frame.effectsEnabled;
     this.allowFlash = frame.flashEffects;
     this.allowMotion = !frame.reducedMotion;
@@ -195,15 +201,18 @@ export class EffectRenderer {
 
     for (let i = this.sparks.length - 1; i >= 0; i--) {
       const spark = this.sparks[i];
-      spark.ageMs += deltaMs;
-      if (spark.ageMs >= spark.lifeMs) {
+      const ageMs = frame.displayMs - spark.spawnSongMs;
+      if (ageMs >= spark.lifeMs) {
         this.sparkPool.release(spark);
         this.swapOutSpark(i);
         continue;
       }
-      spark.vy += SPARK_GRAVITY * deltaMs;
-      spark.x += spark.vx * deltaMs;
-      spark.y += spark.vy * deltaMs;
+      // Ballistic from the spawn, so a frozen frame keeps drawing the same
+      // pixels and a burst left behind by a seek is culled on sight.
+      const t = ageMs > 0 ? ageMs : 0;
+      spark.ageMs = t;
+      spark.x = spark.x0 + spark.vx * t;
+      spark.y = spark.y0 + spark.vy * t + 0.5 * SPARK_GRAVITY * t * t;
     }
 
     if (frame.game.auraWarning) {
@@ -379,10 +388,14 @@ export class EffectRenderer {
       // Upward fan, so the sparks read as the gem breaking through the gate.
       const angle = -Math.PI / 2 + (this.random() - 0.5) * Math.PI * 1.1;
       const speed = SCENE.burstSpeedPxPerMs * (0.4 + this.random() * 0.8);
+      spark.x0 = x;
+      spark.y0 = y;
       spark.x = x;
       spark.y = y;
       spark.vx = Math.cos(angle) * speed;
       spark.vy = Math.sin(angle) * speed;
+      spark.spawnSongMs = songMs;
+      spark.ageMs = 0;
       spark.lifeMs = LAYOUT.burstLifeMs * (0.7 + this.random() * 0.5);
       spark.size = 1.5 + this.random() * 2.5;
       spark.color = color;

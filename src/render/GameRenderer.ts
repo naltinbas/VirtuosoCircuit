@@ -146,7 +146,7 @@ export class GameRenderer {
       ctx.globalAlpha = 1;
     }
 
-    this.effects.update(frame, deltaMs);
+    this.effects.update(frame);
     this.effects.draw(ctx, m, pal, frame);
     ctx.globalAlpha = 1;
   }

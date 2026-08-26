@@ -596,7 +596,7 @@ export class App implements AppApi {
     for (const step of pathTo(this.router.state, "LOADING_TRACK")) this.router.goTo(step);
   }
 
-  /** The practice panel is a pause too, which is what picks the screen shown. */
+  /** Opening the practice panel is a pause too. A run with no practice state pauses to the menu. */
   pause(reason: PauseReason = "menu"): void {
     const session = this.current;
     if (!session || !GAMEPLAY_STATES.has(this.router.state)) return;

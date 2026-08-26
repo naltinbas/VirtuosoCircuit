@@ -271,8 +271,9 @@ export function validateTrack(def: TrackDefinition, track: TrackChart): Validati
     "scoreSourceCredit",
     "licenseNotes",
   ] as const) {
-    // Untyped JSON gets this far through the chart editor, where a truthy
-    // non-string used to throw out of the validator instead of being reported.
+    // Untyped JSON gets this far through the chart editor, so the type is
+    // checked before the emptiness: a truthy non-string would throw on trim()
+    // and take the whole report with it.
     const value: unknown = m[field];
     if (typeof value !== "string" || value.trim().length === 0) {
       push("error", "metadata", `metadata.${field} must be a non-empty string`);

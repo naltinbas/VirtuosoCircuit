@@ -2,10 +2,10 @@
 // a run in progress goes through this class; the pieces it composes hold the
 // actual rules.
 //
-// Nothing here reads a clock. Times arrive as song milliseconds and are
-// corrected once, at the top of every entry point, by judgmentOffsetMs. That
-// is the only place the player's calibration is applied, so a caller can pass
-// raw song time and still get the timing it hears.
+// Nothing here reads a clock. Times arrive as song milliseconds, and update(),
+// press(), release() and activateFocusSurge() subtract judgmentOffsetMs once
+// before anything under them sees the time, so a caller can pass raw song time
+// and still get the timing it hears.
 
 import {
   AURA_CONFIG,

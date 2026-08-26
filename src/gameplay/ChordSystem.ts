@@ -2,10 +2,10 @@
 //
 // A note "resolves" the moment it leaves the pending state, whether it was
 // hit, missed, skipped by a practice loop or started as a hold. A chord pays
-// once every note of its event resolved without a miss; a phrase pays once
-// every note carrying its id resolved without a miss and without a skip. What
-// happens to a hold after its head is irrelevant to both, so dropping a tail
-// never costs a Perfect Passage.
+// when every note of its event has resolved and a phrase when every note
+// carrying its id has, but a miss or a practice skip anywhere in the group
+// cancels the bonus. What happens to a hold after its head is irrelevant to
+// both, so dropping a tail never costs a Perfect Passage.
 
 import type { CompiledChart } from "../charts/ChartTypes";
 import type { NoteRuntime, NoteState } from "./NoteScheduler";

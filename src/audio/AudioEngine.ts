@@ -57,9 +57,9 @@ function defaultCreateContext(): AudioContext | null {
 const GAIN_RAMP_SEC = 0.02;
 
 /**
- * Owns the AudioContext and is the only place in the game that reads
- * ctx.currentTime or performance.now(). Everything else receives times as
- * parameters.
+ * Owns the AudioContext and is the only reader of ctx.currentTime. Everything
+ * else receives times as parameters. InputManager is the one other module that
+ * reads the performance clock, and only to check a key event's timestamp.
  *
  * The audio and performance timelines are related by a single offset:
  * offsetMs = audioMs - perfMs, taken as the maximum of the last

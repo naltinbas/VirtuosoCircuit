@@ -23,8 +23,10 @@ export function formatScore(v: number): string {
 
 /**
  * performance.now() with a fallback for environments that lack it. Only
- * AudioEngine and the renderer's idle backdrop may call this; everything else
- * takes times as parameters so the audio clock stays authoritative.
+ * AudioEngine and InputManager call it: the engine owns the clocks, and input
+ * has to check a key event's timestamp against the timeline it was stamped on.
+ * Everything else takes times as parameters so the audio clock stays
+ * authoritative.
  */
 export function perfNowMs(): number {
   return typeof performance !== "undefined" ? performance.now() : Date.now();

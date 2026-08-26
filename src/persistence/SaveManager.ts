@@ -45,6 +45,19 @@ export interface UnlockInfo {
   unlockAfter?: string;
 }
 
+/**
+ * Locks every track that names a predecessor behind the one before it in
+ * catalog order. A track file names its predecessor by id, so a build that
+ * ships part of the catalog can carry a name no track in it can produce,
+ * which would seal that track and everything after it for good. Resolving the
+ * chain from the catalog itself keeps it contiguous for any subset.
+ */
+export function chainUnlocks(tracks: readonly UnlockInfo[]): UnlockInfo[] {
+  return tracks.map((track, index) =>
+    track.unlockAfter === undefined ? { ...track } : { ...track, unlockAfter: tracks[index - 1]?.id },
+  );
+}
+
 export interface RecordOutcome {
   saved: boolean;
   isNewBest: boolean;

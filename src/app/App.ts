@@ -27,7 +27,7 @@ import { PracticeSystem, practicePrerollMs } from "../gameplay/PracticeSystem";
 import { RhythmGame, type GameSnapshot, type PerformanceSummary } from "../gameplay/RhythmGame";
 import { InputManager, type ShortcutAction } from "../input/InputManager";
 import { KeyBindings } from "../input/KeyBindings";
-import { SaveManager, type TrackResult } from "../persistence/SaveManager";
+import { SaveManager, chainUnlocks, type TrackResult } from "../persistence/SaveManager";
 import { SettingsStore, type Settings } from "../persistence/SettingsStore";
 import { safeLocalStorage } from "../persistence/Storage";
 import { GameRenderer, type RenderFrame } from "../render/GameRenderer";
@@ -357,11 +357,13 @@ export class App implements AppApi {
     this.settings = new SettingsStore(storage, { prefersReducedMotion: prefersReducedMotion() });
     this.save = new SaveManager(
       storage,
-      TRACK_DEFINITIONS.map((d) => ({
-        id: d.metadata.id,
-        title: d.metadata.title,
-        unlockAfter: d.metadata.unlockAfter,
-      })),
+      chainUnlocks(
+        TRACK_DEFINITIONS.map((d) => ({
+          id: d.metadata.id,
+          title: d.metadata.title,
+          unlockAfter: d.metadata.unlockAfter,
+        })),
+      ),
     );
     this.router = new Router({ initial: "MAIN_MENU" });
 

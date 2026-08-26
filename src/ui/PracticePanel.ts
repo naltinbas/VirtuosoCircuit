@@ -126,13 +126,15 @@ export class PracticePanel implements Screen {
       button("Exit to track select", () => this.app.exitToTrackSelect(), { className: "button button--quiet" }),
     );
 
+    // The panel is taller than a 720p viewport, and showing it focuses Close,
+    // so the row sits under the header to keep the top of the panel in view.
     this.element.append(
       header,
+      actions,
       fieldset("Speed", this.speed.element),
       fieldset("Sections", this.sectionList, checkpoints),
       fieldset("Loop", this.playhead.element, this.loopStart.element, this.loopEnd.element, this.loopToggle.element),
       fieldset("Guides", this.beatGrid.element, this.hints.element, this.ghost.element),
-      actions,
     );
   }
 

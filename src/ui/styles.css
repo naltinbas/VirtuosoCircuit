@@ -134,6 +134,11 @@ body {
   margin-top: 1.2rem;
 }
 
+/* The flex above outranks the browser rule for [hidden], so it is restated. */
+.screen__actions[hidden] {
+  display: none;
+}
+
 /* ------------------------------------------------------------------ buttons */
 
 .button {

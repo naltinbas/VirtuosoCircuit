@@ -147,7 +147,7 @@ const harmonyNotes = join(
 const pedalNotes = join(
   melody(10.25, "D2/1.75"),
   melody(12, "D2/4 D2/4"),
-  melody(20, "D2/4 G2/4 Bb2/2 A2/2"),
+  melody(20, "D2/4 G2/2 A2/2 Bb2/2 A2/2"),
   melody(32, "A2/4 D2/4"),
   melody(44, "D2/0.5 D2 A2 A2 Bb2 Bb2 A2 A2"),
   melody(48, "A2/0.5 A2 A2 A2 A2 A2 A2 A2"),
@@ -164,17 +164,28 @@ const impactNotes = join(melody(44, "t/1"), melody(60, "cr/4"), melody(102, "t/1
 // Charts
 // ---------------------------------------------------------------------------
 
-// Prestissimo lane patterns, two beats each. The broken thirds zigzag as they
-// travel, so the lanes zigzag with them: the virtuoso reading takes three of
-// every four sixteenths, the maestro reading takes them all.
+// Lane patterns for the broken thirds, two beats each. The thirds zigzag as
+// they travel, so the lanes zigzag with them: the virtuoso reading takes three
+// of every four sixteenths, the maestro reading takes them all.
 const DESC_A = "4/0.25 3 4 r 3 2 3 r";
 const DESC_B = "2/0.25 1 2 r 1 0 1 r";
 const ASC_A = "0/0.25 1 0 r 1 2 1 r";
 const ASC_B = "2/0.25 3 2 r 3 4 3 r";
 const DESC_A16 = "4/0.25 3 4 3 3 2 3 2";
 const DESC_B16 = "2/0.25 1 2 1 1 0 1 0";
-const ASC_A16 = "0/0.25 1 0 1 1 2 1 2";
-const ASC_B16 = "2/0.25 3 2 3 3 4 3 4";
+
+// The straight scales (the plunge at 32 and the two runs at 86 and 90) move in
+// one direction, so their lanes do too: a staircase that holds each lane for
+// two sixteenths. The maestro reading plays sixteen notes per run, more than
+// five lanes can climb, so it restarts at the far lane on the second octave the
+// way the rocket at beat 52 spirals.
+const SCALE_DOWN_A = "4/0.25 4 3 r 3 3 2 r";
+const SCALE_DOWN_B = "2/0.25 2 1 r 1 0 0 r";
+const SCALE_UP_A = "0/0.25 0 1 r 1 1 2 r";
+const SCALE_UP_B = "2/0.25 2 3 r 3 4 4 r";
+const SCALE_DOWN16 = "4/0.25 4 3 3 2 2 1 0";
+const SCALE_UP16_A = "0/0.25 0 1 1 2 2 3 4";
+const SCALE_UP16_B = "0/0.25 0 1 1 2 3 4 3";
 
 /** One four-beat prestissimo unit, written as two phrases of two beats. */
 function unit(id: string, startBeat: number, first: string, second: string): BeatEvent[] {
@@ -197,7 +208,7 @@ const noviceChart = chart(
   phrase("b9", 44, "[3,4]!/1 2/1 [3,4]/1 1/1"),
   phrase("b10", 48, "[2,3]/1 2/1 [1,2]/1 1!/1"),
   phrase("c1", 52, "0/1 1/1 3/1 4!/1"),
-  phrase("c2", 56, "3/1 1/1 0/1 2/1 [2,4]!/4"),
+  phrase("c2", 56, "3/1 1/1 0/1 2/1 2h!/3 &4h/3"),
   phrase("d1", 64, "1/1 2/1 4/1 3/1 2/1 1/1"),
   phrase("d2", 70, "0/1 1/0.5 2/0.5 2/1 3/0.5 4/0.5"),
   phrase("d3", 74, "4/1 3/1 2/1 1/1"),
@@ -208,7 +219,7 @@ const noviceChart = chart(
   phrase("d8", 94, "2/1 2/0.5 4/0.5 1/1 1/1"),
   phrase("d9", 98, "[3,4]/1 2/1 [1,2]/1 0/1"),
   phrase("d10", 102, "0/1 3/0.5 4/0.5 3/1 2/0.5 1/0.5"),
-  phrase("e1", 106, "4/1 3/1 [3,4]!/2 [2,3]/2 [2,4]/2 [1,4]!/4"),
+  phrase("e1", 106, "4/1 3/1 [3,4]!/2 [2,3]/2 [2,4]/2 1h!/6 &4h/6"),
 );
 
 const apprenticeChart = chart(
@@ -228,18 +239,18 @@ const apprenticeChart = chart(
   phrase("b10", 48, "[3,4]/1 [2,3] [1,2] [0,2]!"),
   phrase("c1", 52, "0/0.5 1 2 3 4/1 4!/1"),
   phrase("c2", 55.5, "3/0.5 2 1 0 r 1/1 2/0.5 3/0.5"),
-  phrase("c3", 60, "[2,4]!/4 0/0.5 1 2 3"),
+  phrase("c3", 60, "2h!/3 &4h/3 r/1 0/0.5 1 2 3"),
   phrase("d1", 66, "4/0.5 4 3 3 2 2 1 0"),
   phrase("d2", 70, "0/0.5 1 1 2 2 3 3 4"),
   phrase("d3", 74, "4/0.5 4 3 3 2 2 1 0"),
   phrase("d4", 78, "0/0.5 0 1 1 2 2 3 4"),
-  phrase("d5", 82, "4/0.5 3 4 3 2 1 2 1"),
+  phrase("d5", 82, "4/0.5 4 4 4 3 3 2 2"),
   phrase("d6", 86, "0/0.5 1 1 2 3 3 4 4"),
   phrase("d7", 90, "4/0.5 4 3 3 2 2 1 0"),
   phrase("d8", 94, "2/0.5 4 2 4 1 4 1/1"),
   phrase("d9", 98, "[3,4]/1 [2,3] [1,2] [0,1]"),
   phrase("d10", 102, "0/0.5 1 3 4 4 3 2 1"),
-  phrase("e1", 106, "4!/0.5 4 3 2 [3,4]!/2 [2,3] [2,4] [1,4]!/4"),
+  phrase("e1", 106, "4!/0.5 4 3 2 [3,4]!/2 [2,3] [2,4] 1h!/6 &4h/6"),
 );
 
 const virtuosoChart = chart(
@@ -252,7 +263,7 @@ const virtuosoChart = chart(
   unit("b3", 20, "2/0.25 3 4 r 2 3 4 r", "1/0.25 2 4 r 1 2 4 r"),
   unit("b4", 24, "1/0.25 2 3 r 1 2 3 r", "0/0.25 1 3 r 0 1 3 r"),
   unit("b5", 28, "2/0.25 3 4 r 2 3 4 r", "1/0.25 2 4 r 1 2 4 r"),
-  unit("b6", 32, "4/0.25 4 3 r 3 3 2 r", "2/0.25 2 1 r 1 0 0 r"),
+  unit("b6", 32, SCALE_DOWN_A, SCALE_DOWN_B),
   unit("b7", 36, "0/0.25 1 2 r 3 4 4 r", "3/0.25 2 2 r 1 0 0 r"),
   unit("b8", 40, "0/0.25 1 2 r 2 3 4 r", "4/0.25 3 2 r 2 1 r r"),
   phrase("b9", 44, "[2,3,4]!/1 [1,2,4] [2,3,4] [1,2,4]"),
@@ -260,21 +271,21 @@ const virtuosoChart = chart(
   phrase("c1", 52, "0/0.25 1 2 r 1 2 3 r"),
   phrase("c1b", 54, "2/0.25 3 4 r 4!/1"),
   phrase("c2", 55.5, "4/0.25 3 2 r 3 2 1 r 1 0"),
-  phrase("c3", 58, "1/0.5 2 3 4 [0,2,4]!/2"),
+  phrase("c3", 58, "1/0.5 2 3 4 0h!/3 &4h/3"),
   phrase("c4", 64, "0/0.5 1 2 3"),
   unit("d1", 66, DESC_A, DESC_B),
   unit("d2", 70, ASC_A, ASC_B),
   unit("d3", 74, DESC_A, DESC_B),
   unit("d4", 78, ASC_A, ASC_B),
-  trill("t1", 82, "4/0.5 2 4 2"),
-  trill("t2", 84, "3/0.5 1 3 1"),
-  unit("d5", 86, ASC_A, ASC_B),
-  unit("d6", 90, DESC_A, DESC_B),
+  trill("t1", 82, "4/0.25 2 r/0.5 4/0.25 2 r/0.5"),
+  trill("t2", 84, "3/0.25 4 r/0.5 2/0.25 3 r/0.5"),
+  unit("d5", 86, SCALE_UP_A, SCALE_UP_B),
+  unit("d6", 90, SCALE_DOWN_A, SCALE_DOWN_B),
   unit("d7", 94, "1/0.25 3 4 r 1 3 4 r", "0/0.25 2 4 r 0 2 r r"),
   phrase("d8", 98, "[3,4]/0.5 2 [3,4] 2 [1,2] 0 [1,2] 0"),
-  unit("d9", 102, "0/0.25 1 2 r 4 3 4 r", "4/0.25 3 4 r 2 1 0 r"),
+  unit("d9", 102, "0/0.25 1 2 r 2 3 4 r", "4/0.25 3 2 r 2 1 0 r"),
   phrase("e1", 106, "4!/0.25 3 4 4 3 2 1 r"),
-  phrase("e2", 108, "[2,3,4]!/2 [1,2,3] [1,2,4] [0,2,4]!/6"),
+  phrase("e2", 108, "[2,3,4]!/2 [1,2,3] [1,2,4] 0h!/6 &4h/6"),
 );
 
 const maestroChart = chart(
@@ -287,7 +298,7 @@ const maestroChart = chart(
   unit("b3", 20, "2/0.25 3 4 3 2 3 4 3", "1/0.25 2 4 2 1 2 4 2"),
   unit("b4", 24, "1/0.25 2 3 2 1 2 3 2", "0/0.25 1 3 1 0 1 3 1"),
   unit("b5", 28, "2/0.25 3 4 3 2 3 4 3", "1/0.25 2 4 2 1 2 4 2"),
-  unit("b6", 32, DESC_A16, DESC_B16),
+  unit("b6", 32, SCALE_DOWN16, SCALE_DOWN16),
   unit("b7", 36, "0/0.25 1 2 3 3 4 4 3", "3/0.25 3 2 2 1 1 0 0"),
   unit("b8", 40, "0/0.25 1 1 2 2 3 3 4", "4/0.25 3 3 2 2 1 r r"),
   phrase("b9", 44, "[2,3,4]!/0.5 0 [1,2,4] 0 [2,3,4] 0 [1,2,4] 0"),
@@ -296,21 +307,21 @@ const maestroChart = chart(
   phrase("c1b", 54, "1/0.25 2 3 4 4!/1"),
   phrase("c2", 55.5, "4/0.25 4 3 3 2 2"),
   phrase("c2b", 57, "1/0.25 1 0 0"),
-  phrase("c3", 58, "0/0.25 1 2 r 2 3 4 r [0,2,4]!/2"),
+  phrase("c3", 58, "0/0.25 1 2 r 2 3 4 r 0h!/3 &4h/3"),
   phrase("c4", 64, "0/0.5 1 2 3"),
   unit("d1", 66, DESC_A16, DESC_B16),
   unit("d2", 70, ASC_A, ASC_B),
   unit("d3", 74, DESC_A16, DESC_B16),
   unit("d4", 78, ASC_A, ASC_B),
   trill("t1", 82, "4/0.25 2 4 2 4 2 4 2"),
-  trill("t2", 84, "3/0.25 1 3 1 3 1 3 1"),
-  unit("d5", 86, ASC_A16, ASC_B16),
-  unit("d6", 90, DESC_A16, DESC_B16),
+  trill("t2", 84, "3/0.25 4 3 4 2 3 2 3"),
+  unit("d5", 86, SCALE_UP16_A, SCALE_UP16_B),
+  unit("d6", 90, SCALE_DOWN16, SCALE_DOWN16),
   unit("d7", 94, "1/0.25 3 4 r 1 3 4 r", "0/0.25 2 4 r 0 2 r r"),
-  phrase("d8", 98, "[2,3,4]!/0.5 1 [2,3,4] 0 [1,2,3] 0 [0,1,2] 3"),
-  unit("d9", 102, "0/0.25 1 2 3 4 3 4 3", "4/0.25 3 4 3 2 1 0 r"),
+  phrase("d8", 98, "[2,3,4]!/0.5 1 [2,3,4] 0 [1,2,3] 0 [0,1,2] 0"),
+  unit("d9", 102, "0/0.25 1 2 1 2 3 4 4", "3/0.25 3 2 2 1 1 0 r"),
   phrase("e1", 106, "[3,4]!/0.25 3 4 4 3 2 1 0"),
-  phrase("e2", 108, "[2,3,4]!/2 [1,2,3] [1,2,4] [0,2,4]!/6"),
+  phrase("e2", 108, "[2,3,4]!/2 [1,2,3] [1,2,4] 0h!/6 &4h/6"),
 );
 
 const def: TrackDefinition = {
@@ -333,7 +344,7 @@ const def: TrackDefinition = {
     scoreSourceCredit:
       "Written from the author's own knowledge of the published organ score. No external MIDI file, edition or recording was used.",
     licenseNotes:
-      "The composition is in the public domain. The note data here is an original arrangement written for this game and is covered by the project licence.",
+      "The composition is in the public domain. The note data here is an original arrangement written for this game and is covered by the project license.",
     unlockAfter: "beethoven-fur-elise",
   },
   tempoMap: [

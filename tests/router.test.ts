@@ -183,4 +183,23 @@ describe("panel states", () => {
       expect(TRANSITIONS[panel]).toContain("MAIN_MENU");
     }
   });
+
+  it("has no panel that can reach an outcome screen", () => {
+    for (const panel of PANEL_STATES) {
+      expect(TRANSITIONS[panel]).not.toContain("TRACK_COMPLETE");
+      expect(TRANSITIONS[panel]).not.toContain("PERFORMANCE_INTERRUPTED");
+    }
+  });
+
+  it("returns a panel opened over a paused run to the pause menu", () => {
+    const r = router("PLAYING");
+    r.goTo("PAUSED");
+    r.open("CALIBRATION");
+    // A run ended from the debug api under the panel goes back this way
+    // before it can reach the interrupted screen.
+    r.back();
+    expect(r.state).toBe("PAUSED");
+    expect(r.resumeState).toBe("PLAYING");
+    expect(r.can("PLAYING")).toBe(true);
+  });
 });

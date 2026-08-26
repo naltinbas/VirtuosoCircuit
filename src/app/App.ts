@@ -47,7 +47,7 @@ import { UIManager } from "../ui/UIManager";
 import { clamp } from "../utils/MathUtils";
 import { AUDIO, DEBUG_ENABLED, HIGHWAY, LANE_IDENTITIES, type Judgment } from "./Config";
 import { GAMEPLAY_STATES, type GameState, type PlayMode } from "./GameState";
-import { Router } from "./Router";
+import { PANEL_STATES, Router } from "./Router";
 
 export interface Session {
   track: TrackChart;
@@ -1301,6 +1301,9 @@ export class App implements AppApi {
    * the pause menu is up. Both have a legal way into the play state first.
    */
   private leavePause(): void {
+    // Settings, calibration and controls open over the pause menu, and only
+    // the pause menu has a way back into the run.
+    if (PANEL_STATES.has(this.router.state)) this.router.back();
     const state = this.router.state;
     if (state === "COUNTDOWN") {
       this.router.goTo("PLAYING");

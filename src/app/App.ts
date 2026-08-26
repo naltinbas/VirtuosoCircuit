@@ -1244,7 +1244,11 @@ export class App implements AppApi {
       this.hud.setBanner("Performance complete");
     } else {
       this.sfx.play("fail");
+      // The ring-out fade goes first: pause() retires the voices with its own
+      // stopAll() at the default fade, and it has to stop the scheduler or the
+      // next tick would refill the lookahead under the banner.
       this.transport.stopAll(400);
+      this.transport.pause();
       this.router.goTo("PERFORMANCE_INTERRUPTED");
       this.hud.setBanner("Performance interrupted");
     }

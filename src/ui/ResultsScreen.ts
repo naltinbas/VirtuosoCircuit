@@ -133,7 +133,6 @@ export class ResultsScreen implements Screen {
     for (const judgment of JUDGMENTS) rows.push([JUDGMENT_LABELS[judgment], `${summary.counts[judgment]}`]);
     rows.push(
       ["Best Resonance Chain", `${summary.bestChain}`],
-      ["Misses", `${summary.misses}`],
       ["Early releases", `${summary.earlyReleases}`],
       ["Perfect Passages", `${summary.phrasesCompleted} of ${summary.phraseCount}`],
       ["Trills", `${summary.trillsCompleted} of ${summary.trillCount}`],

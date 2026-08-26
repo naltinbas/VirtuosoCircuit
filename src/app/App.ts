@@ -307,6 +307,8 @@ export class App implements AppApi {
   private dwellTimer: ReturnType<typeof setTimeout> | null = null;
   private announceTimer: ReturnType<typeof setTimeout> | null = null;
   private forcedOutcome = false;
+  /** True while stepTo is walking the run forward without frames. */
+  private stepping = false;
 
   private readonly noteBuffer: NoteView[] = [];
   private readonly heldLanes: boolean[] = LANES.map(() => false);
@@ -959,13 +961,22 @@ export class App implements AppApi {
   private stepTo(fromMs: number, toMs: number, withAutoplay: boolean): void {
     const session = this.current;
     if (!session) return;
-    for (let t = fromMs; t < toMs; t += STEP_MS) {
-      if (withAutoplay) this.stepAutoplay(t - this.judgmentOffsetMs);
-      session.game.update(t);
-      if (session.game.finished) return;
+    // A whole run can pass through here in one synchronous call, so the
+    // judgment sounds it produces are dropped rather than stacked on one
+    // audio timestamp. The popups and bursts stay: they are what a frozen
+    // frame is meant to show.
+    this.stepping = true;
+    try {
+      for (let t = fromMs; t < toMs; t += STEP_MS) {
+        if (withAutoplay) this.stepAutoplay(t - this.judgmentOffsetMs);
+        session.game.update(t);
+        if (session.game.finished) return;
+      }
+      if (withAutoplay) this.stepAutoplay(toMs - this.judgmentOffsetMs);
+      session.game.update(toMs);
+    } finally {
+      this.stepping = false;
     }
-    if (withAutoplay) this.stepAutoplay(toMs - this.judgmentOffsetMs);
-    session.game.update(toMs);
   }
 
   // -------------------------------------------------------------------------
@@ -1219,23 +1230,29 @@ export class App implements AppApi {
     const events = game.events;
     this.unbindGame = [
       events.on("judgment", ({ lane, judgment, deltaMs, songMs }) => {
-        this.sfx.play(JUDGMENT_SFX[judgment]);
+        this.feedback(JUDGMENT_SFX[judgment]);
         this.renderer.addJudgment(lane, judgment, deltaMs, songMs, this.debugView);
       }),
       events.on("phraseComplete", ({ trill }) => {
-        this.sfx.play("phrase");
+        this.feedback("phrase");
         this.renderer.addPhrasePulse(game.snapshot().lastJudgmentSongMs);
         this.hud.flashMessage(trill ? "Trill" : "Perfect Passage");
       }),
       events.on("recenter", () => this.hud.flashMessage("Recenter")),
       events.on("surgeStart", () => {
-        this.sfx.play("surge-start");
+        this.feedback("surge-start");
         this.hud.flashMessage("Focus Surge");
       }),
-      events.on("surgeEnd", () => this.sfx.play("surge-end")),
+      events.on("surgeEnd", () => this.feedback("surge-end")),
       events.on("complete", () => this.enterOutcome(true)),
       events.on("fail", () => this.enterOutcome(false)),
     ];
+  }
+
+  /** A sound a note made. Silent while a run is being stepped forward. */
+  private feedback(name: SfxName): void {
+    if (this.stepping) return;
+    this.sfx.play(name);
   }
 
   private releaseListeners(): void {

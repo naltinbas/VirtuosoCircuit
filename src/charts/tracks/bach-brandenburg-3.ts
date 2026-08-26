@@ -6,9 +6,14 @@
 // ritornello (bars 1 and 2) and its cadence (bars 7 and 8) so the track closes
 // on a full stop rather than mid phrase.
 //
+// The score is written alla breve, two half note beats to the bar. It is
+// charted here with the quarter as the beat, so a bar is four beats and the
+// tempo is written as quarter = 100.
+//
 // Form: opening ritornello, echo dialogue, arpeggio episode, return, coda.
-// The two violin lines double at the octave through the ritornello, as the
-// score has them, and separate into three part writing once the echoes start.
+// The score has the violins in unison through the ritornello; here the second
+// line drops an octave so the two synth voices separate. From bar 9 that line
+// takes the answering echoes while the first keeps the top part.
 
 import { chart, join, lanes, melody, part, phrase, shiftEvents, trill } from "../Authoring";
 import type { BeatEvent, TrackDefinition } from "../ChartTypes";
@@ -41,7 +46,9 @@ const harpsichordHead = (at: number) =>
   melody(
     at,
     "G3+B3+D4/2 G3+B3+D4 | " +
-      "G3+B3+D4 F#3+A3+D4",
+      // The second half of bar 2 is already the dominant: A under the violins'
+      // C#, then D. Holding G there would sound a second against the C#.
+      "G3+B3+D4/1.5 E3+A3+C#4/0.5 F#3+A3+D4/2",
   );
 
 // Score bar 7 and the first half of bar 8: the cadential descent that ends
@@ -67,7 +74,8 @@ const continuoClose = (at: number) =>
 const harpsichordClose = (at: number) =>
   melody(
     at,
-    "G3+B3+D4/2 G3+B3+D4 | " +
+    // Bar 7 leans onto D halfway through, where the violins reach F#.
+    "G3+B3+D4/1.5 F#3+A3+D4/0.5 G3+B3+D4/2 | " +
       "G3+B3+D4",
   );
 
@@ -84,14 +92,14 @@ const violin1 = join(
       "B4 G5 C#5 G5 D5 F#5 D5 G5 D5 A5 D5 B5 D5 C6 D5 D6",
   ),
   violin1Close(28),
-  // Bar 8 resolves, then the upbeat that throws the figure an octave up.
-  melody(34, "G4/1 r/0.5 G6/0.25 F#6"),
+  // Bar 8 resolves, then the upbeat into the echo, taken softer.
+  melody(34, "G4/1 r/0.5 G5@0.6/0.25 F#5"),
   // Score bars 9 to 16: the echoes, then the head restated in G.
   melody(
     36,
-    "G6/0.5 D6/0.25 C6 D6/0.5 r/2.5 | " +
-      "r/0.5 D5 G5/0.25 B5 A5 G5 F#5 A5 D5 E5 F#5 G5 A5 G5 | " +
-      "F#5/0.5 D6 r C#6 D6 G5 D5 E5 | " +
+    "G5@0.6/0.5 D5/0.25 C5 D5/0.5 r/2.5 | " +
+      "r/0.5 D5@0.8 G5/0.25 B5 A5 G5 F#5 A5 D5 E5 F#5 G5 A5 G5 | " +
+      "F#5/0.5 D6 r C#6 D6 A5 D5 E5 | " +
       "F#5 E5/0.25 D5 E5/0.5 D5/0.25 C#5 D5/0.5 C#5/0.25 B4 A4 D5 A4 D5 | " +
       "B4/0.5 A4/0.25 G4 F#4 D5 F#4 D5 G4/0.5 F#4/0.25 E4 D4 D5 E4 D5 | " +
       "F#4 D5 G#4 D5 A4 C#5 A4 D5 A4 E5 A4 F#5 A4 G5 A4 A5 | " +
@@ -101,7 +109,7 @@ const violin1 = join(
   // Score bars 17 to 21: the answering thirds and the broken chords.
   melody(
     68,
-    "r/0.5 B4/0.25 C5 D5/0.5 F#5 A4 D6/0.25 C#6 D6/0.5 r | " +
+    "r/0.5 B4/0.25 C5 D5/0.5 E5 A4 D6/0.25 C#6 D6/0.5 r | " +
       "r D6/0.25 C#6 D6/0.5 r/1 D6/0.25 C#6 D6/0.5 r | " +
       "r D5 F#5 A5 F#5 D5 F#5 A5 | " +
       "F#5 A4 D5/0.25 F#5 E5 D5 C#5/1 r/0.5 C#5 | " +
@@ -153,7 +161,7 @@ const violin2 = join(
   // Score bars 17 to 21.
   melody(
     68,
-    "r/0.5 B4/0.25 C5 D5/0.5 F#5 A4 A5/0.25 G5 A5/0.5 r | " +
+    "r/0.5 B4/0.25 C5 D5/0.5 E5 A4 A5/0.25 G5 A5/0.5 r | " +
       "r A5/0.25 G5 A5/0.5 r/1 A5/0.25 G5 A5/0.5 r | " +
       "r D5 F#5 A5 F#5 D5 F#5 A5 | " +
       "F#5 A4 D5/0.25 F#5 E5 D5 C#5 E5 A4 B4 C#5 D5 E5 F#5 | " +
@@ -235,8 +243,10 @@ const harpsichord = join(
     12,
     "F#3+A3+D4/2 F#3+A3+D4 | " +
       "G3+B3+D4 E3+G3+B3 | " +
-      "E3+G3+C4 E3+G3+B3 | " +
-      "F#3+A3+D4 F#3+A3+D4",
+      // Bar 5 stays on C while the bass walks down, then turns to A for the
+      // C# that leads into D.
+      "E3+G3+C4 E3+G3+C4/1.5 E3+A3+C#4/0.5 | " +
+      "F#3+A3+D4/2 F#3+A3+D4",
   ),
   harpsichordClose(28),
   melody(34, "G3+B3+D4/2"),
@@ -293,24 +303,24 @@ const noviceClose: BeatEvent[] = [
   ...phrase("c2", 32, "0/1 2"),
 ];
 const noviceEpisode: BeatEvent[] = [
-  ...phrase("d1", 34, "0h!/1.5 r/0.5 | [1,4]!/1 3 0h/1.75 r/0.25"),
+  ...phrase("d1", 34, "0h!/1 r/1 | [1,4]!/1 3 0h/1.75 r/0.25"),
   ...phrase("d2", 40, "1h/0.75 r/0.25 3/1 2/1.25 3/0.75"),
   ...phrase("d3", 44, "2/2 4/1 2 | 3 2"),
   ...phrase("d4", 50, "1/1 2 | 3 1 2 0"),
   ...phrase("d5", 56, "1/1 2/1.25 3/0.75 2/1"),
-  ...phrase("d6", 60, "4/1 2 3h!/1.5 r/0.5 | [1,4]!/1 1 0h/1.75 r/0.25"),
+  ...phrase("d6", 60, "4/1 2 3h!/1 r/1 | [1,4]!/1 1 0h/1.75 r/0.25"),
 ];
 const noviceArpeggios: BeatEvent[] = [
-  ...phrase("e1", 68, "1h/0.75 r/0.25 2/1 1 4h/1.5 | r/0.5 4h/1.5 r/0.5 4h/1.5 | r/0.5 3/1"),
-  ...phrase("e2", 78, "3/1 3 | 3 2 1h/1.5 r/0.5"),
-  ...phrase("e3", 84, "0h!/1.5 r/0.5 2/1 2"),
+  ...phrase("e1", 68, "1h/0.75 r/0.25 2/1 1 4h/1 | r/1 4h/1 r/1 4h/1 | r/1 3/1"),
+  ...phrase("e2", 78, "3/1 3 | 3 2 1h/1 r/1"),
+  ...phrase("e3", 84, "0h!/1 r/1 2/1 2"),
 ];
 const noviceReturn: BeatEvent[] = [
   ...phrase("f1", 88, "4/1 4 3 3"),
   ...phrase("f2", 92, "2/1 0 1/1.25 2/0.75"),
   ...phrase("f3", 96, "1/1.25 4/0.75 2/1.25 1/0.75"),
   ...phrase("f4", 100, "3/1.25 1/0.75 0/1 0"),
-  ...phrase("f5", 104, "4h!/1.5 r/0.5 0h/1 r/0.5"),
+  ...phrase("f5", 104, "4h!/1 r/1 0h/1 r/0.5"),
 ];
 const noviceChart = chart(
   "novice",
@@ -427,7 +437,7 @@ const virtuosoArpeggios: BeatEvent[] = [
 const virtuosoReturn: BeatEvent[] = [
   ...phrase("f1", 88, "[1,3]/0.5 3 3 2/0.25 1"),
   ...phrase("f2", 90, "3/0.5 3 3 2/0.25 1"),
-  ...phrase("f3", 92, "[1,3]/0.5 2/0.25 1/0.75 1/0.5 2/0.25 1/0.5 2/0.25 1"),
+  ...phrase("f3", 92, "[0,3]/0.5 2/0.25 1/0.75 1/0.5 2/0.25 1/0.5 2/0.25 1"),
   ...trill("f4", 95.25, "3/0.5 4/0.25 | 1 0/0.5 1/0.25 0 3/0.5 4/0.25"),
   ...phrase("f5", 98, "2/0.25 1/0.5 3/0.25 2/0.5 3/0.25 0"),
   ...phrase("f6", 100, "3/0.25 2/0.5 4/0.25 3/0.5 4/0.25 2"),
@@ -457,31 +467,31 @@ const maestroHead: BeatEvent[] = [
   ...phrase("a4", 11, "0/0.25 3 0 3"),
 ];
 const maestroMid: BeatEvent[] = [
-  ...phrase("b1", 12, "[0,3]/0.25 3 0 3 0 4 0 4"),
+  ...phrase("b1", 12, "[0,4]/0.25 3 0 3 0 4 0 4"),
   ...trill("b2", 14, "0/0.25 3 0 3 0 4 0 4"),
   ...phrase("b3", 16, "2h/0.5 r/0.25 1 2/0.5 1/0.25 0"),
   ...phrase("b4", 18, "2/0.5 1/0.25 3 0 4 0 4"),
   ...phrase("b5", 20, "[1,3]/0.5 2/0.25 3 0 4 0 4"),
   ...phrase("b6", 22, "1/0.5 1/0.25 3 0 3 0 3"),
-  ...phrase("b7", 24, "[1,3]/0.25 3 1 3 2 3 2 3"),
+  ...phrase("b7", 24, "[1,4]/0.25 3 1 3 2 3 2 3"),
   ...trill("b8", 26, "2/0.25 3 2 4 2 4 2 4"),
 ];
 const maestroClose: BeatEvent[] = [
-  ...phrase("c1", 28, "[2,3]/0.5 1/0.25 2 0/0.5 2"),
+  ...phrase("c1", 28, "[0,2]/0.5 1/0.25 2 0/0.5 2"),
   ...phrase("c2", 30, "3/0.5 2/0.25 4 1 3 0 3"),
-  ...phrase("c3", 32, "[0,3]/0.5 1/0.25 0 2/0.5 2"),
+  ...phrase("c3", 32, "[0,4]/0.5 1/0.25 0 2/0.5 2"),
 ];
 const maestroEpisode: BeatEvent[] = [
   ...phrase("d1", 34, "0h!/1 r/0.5 4/0.25 3 | [0,1,4]!/0.5 3/0.25 2 3h/0.5 r"),
   ...phrase("d2", 38, "1h/1.25 r/0.25 0 1/0.75 | 2/0.5 1/0.25 4 2 3"),
   ...phrase("d3", 42, "1/0.25 4 0 3 1 3 2 3"),
-  ...phrase("d4", 44, "[1,3]/0.5 4 1/0.25 2 3/0.5"),
+  ...phrase("d4", 44, "[1,4]/0.5 3 1/0.25 2 3/0.5"),
   ...phrase("d5", 46, "4/0.5 2 1 2"),
   ...phrase("d6", 48, "3h/0.5 r/0.25 1 2/0.5 1/0.25 2"),
   ...phrase("d7", 50, "3/0.5 2/0.25 3 0 4 0 4"),
   ...phrase("d8", 52, "[1,3]/0.5 2/0.25 3 0 4 0 4"),
   ...phrase("d9", 54, "1/0.5 1/0.25 3 0 3 0 3"),
-  ...phrase("d10", 56, "[1,3]/0.25 3 1 3 2 3 2 3"),
+  ...phrase("d10", 56, "[1,4]/0.25 3 1 3 2 3 2 3"),
   ...trill("d11", 58, "2/0.25 3 2 4 2 4 2 4"),
   ...phrase("d12", 60, "2/0.5 1/0.25 2 1/0.5 2"),
   ...phrase("d13", 62, "3!/0.5 0/0.25 3 1 3 2 4"),
@@ -501,14 +511,14 @@ const maestroArpeggios: BeatEvent[] = [
 const maestroReturn: BeatEvent[] = [
   ...phrase("f1", 88, "[2,3]/0.5 2 2 3/0.25 1"),
   ...phrase("f2", 90, "3/0.5 3 3 2/0.25 1"),
-  ...phrase("f3", 92, "[1,3]/0.5 2/0.25 1 0/0.5 1"),
+  ...phrase("f3", 92, "[0,3]/0.5 2/0.25 1 0/0.5 1"),
   ...trill("f4", 94, "2/0.25 3 1 4 1 4 1 4"),
-  ...phrase("f5", 96, "[1,3]/0.25 3 1 4 1 4 1 4"),
+  ...phrase("f5", 96, "[1,3]/0.25 0 1 4 1 4 1 4"),
   ...phrase("f6", 98, "1/0.25 4 1 4 1 3 2 3"),
   ...phrase("f7", 100, "1/0.25 4 1 4 1 3 2 3"),
   ...trill("f8", 102, "0/0.25 3 0 3 0 4 0 4"),
   ...phrase("f9", 104, "2!/0.5 1/0.25 3 1 4 1 3"),
-  ...phrase("f10", 106, "1/0.5 1/0.25 2 1 4"),
+  ...phrase("f10", 106, "1/0.5 1/0.25 2 1 3"),
 ];
 const maestroChart = chart(
   "maestro",
@@ -536,23 +546,24 @@ const def: TrackDefinition = {
     composerShort: "J. S. Bach",
     catalogNumber: "BWV 1048",
     movementOrExcerpt: "I. Allegro, opening ritornello",
-    bpm: 92,
+    bpm: 100,
     timeSignature: [4, 4],
     difficulty: "maestro",
     arrangementStyle: "Fast ensemble strings over harpsichord and bass continuo",
     arrangementCredit:
       "Original game arrangement based on a public-domain composition, written for Virtuoso Circuit",
     scoreSourceCredit:
-      "Bars 1 to 26 of the first movement, condensed and re-scored for four synth parts. " +
-      "The two violin lines and the continuo bass follow the public-domain score; they were " +
-      "transcribed with the help of a public-domain MIDI rendering of that score, then quantised, " +
-      "thinned and cut down here. No commercial edition, engraving file or recording was used.",
+      "Bars 1 to 26 of the first movement, transcribed from the public-domain score and " +
+      "condensed and re-scored for four synth parts. The two violin lines and the continuo " +
+      "bass follow the score, with the second violin line an octave down through the " +
+      "ritornello; the harpsichord realises the figured bass. No external MIDI file, edition " +
+      "or recording was used.",
     licenseNotes:
       "Bach died in 1750 and the composition is in the public domain. The note data in this file " +
       "is an original arrangement written for this game and carries no third-party rights.",
     unlockAfter: "beethoven-symphony-5",
   },
-  tempoMap: [{ beat: 0, bpm: 92 }],
+  tempoMap: [{ beat: 0, bpm: 100 }],
   sections: [
     { name: "Opening ritornello", startBeat: 0, endBeat: 36 },
     { name: "Echo dialogue", startBeat: 36, endBeat: 68 },

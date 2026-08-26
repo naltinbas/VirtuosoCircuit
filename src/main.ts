@@ -9,3 +9,6 @@ const app = new App(root);
 app.start();
 
 if (DEBUG_ENABLED) window.vc = app.debugApi();
+
+// A hot reload would otherwise leave the old frame loop and listeners running.
+import.meta.hot?.dispose(() => app.destroy());

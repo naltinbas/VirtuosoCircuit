@@ -103,6 +103,8 @@ export const GUIDED_CALIBRATION = {
   maxTaps: 24,
   /** Taps further than this from the beat are ignored outright. */
   rejectBeyondMs: 180,
+  /** Remaining taps further than this many median absolute deviations from the median are outliers. */
+  madFactor: 2.5,
 } as const;
 
 export const KEYMAP_PRESETS = {

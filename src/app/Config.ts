@@ -84,6 +84,13 @@ export const AURA_CONFIG = {
   focusSurgeCost: 50,
 } as const;
 
+/** UI text scale, applied as the --text-scale CSS variable and to canvas text. */
+export const TEXT_SCALE_RANGE = {
+  min: 0.85,
+  max: 1.5,
+  step: 0.05,
+} as const;
+
 export const CALIBRATION_RANGE_MS = {
   min: -250,
   max: 250,
@@ -280,6 +287,23 @@ export const AUDIO = {
   unlockTimeoutMs: 500,
   /** Polyphony cap; the oldest voice is stolen beyond it. */
   maxVoices: 48,
+  /** Fade used when voices are stopped for a pause, a seek, a restart or an exit. */
+  voiceFadeMs: 40,
+  /** Offset samples kept by AudioEngine, one per frame. The offset in use is the maximum of them. */
+  clockSampleCount: 64,
+  /** An offset sample this far from the one in use replaces the whole buffer (resync after a suspend). */
+  clockResyncMs: 100,
+  /** A clock sample older than this is refreshed before nowMs() or perfToAudioMs() answers. */
+  clockSampleMaxAgeMs: 50,
+  /** A note already sounding at a resume point is retriggered only if at least this much of it is left. */
+  retriggerMinRemainingMs: 150,
+  /** How far back the transport looks for notes that are still sounding at a resume point. */
+  retriggerScanMs: 12_000,
+  /** Clock rate guards. Practice runs at 0.5 and debug slow motion halves that again. */
+  rateMin: 0.125,
+  rateMax: 2,
+  /** Starting mixer levels. DEFAULT_SETTINGS and AudioEngine both read these. */
+  defaultVolume: { master: 0.8, music: 0.8, effects: 0.7 },
 } as const;
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {

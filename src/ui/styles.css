@@ -178,7 +178,8 @@ body {
   background: linear-gradient(180deg, rgba(255, 122, 107, 0.32), rgba(255, 122, 107, 0.16));
 }
 
-:focus-visible {
+:focus-visible,
+.is-focus-ring {
   outline: 3px solid var(--amber);
   outline-offset: 2px;
 }

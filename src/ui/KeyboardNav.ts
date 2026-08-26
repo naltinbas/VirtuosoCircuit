@@ -24,9 +24,26 @@ function isFormControl(element: Element | null): boolean {
   return tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA";
 }
 
-/** Sliders and text fields keep the arrow keys for their own value. */
-function ownsArrows(element: Element | null): boolean {
-  return isFormControl(element);
+/** Sliders and text fields keep the arrow keys that change their own value. */
+function ownsArrows(element: Element | null, code: string): boolean {
+  if (!element) return false;
+  if (element.tagName === "SELECT" || element.tagName === "TEXTAREA") return true;
+  if (!(element instanceof HTMLInputElement)) return false;
+  // A checkbox has no value along either axis, so it never holds an arrow key.
+  if (element.type === "checkbox" || element.type === "radio") return false;
+  if (element.type === "range") return code === "ArrowLeft" || code === "ArrowRight";
+  return true;
+}
+
+/**
+ * Focus moved by code does not match :focus-visible after a pointer click, so
+ * the ring is carried by a class until the element loses focus.
+ */
+export function focusVisibly(element: HTMLElement): void {
+  element.focus();
+  if (element.ownerDocument.activeElement !== element) return;
+  element.classList.add("is-focus-ring");
+  element.addEventListener("blur", () => element.classList.remove("is-focus-ring"), { once: true });
 }
 
 export class KeyboardNav {
@@ -71,7 +88,7 @@ export class KeyboardNav {
     // A screen with a dialog has an autofocus target on each side of it, so the
     // preferred one counts only while it is navigable.
     const target = (preferred !== null && items.includes(preferred) ? preferred : items[0]) ?? container;
-    target.focus();
+    focusVisibly(target);
   }
 
   private move(container: HTMLElement, delta: number): void {
@@ -104,13 +121,13 @@ export class KeyboardNav {
       return;
     }
     if (event.code === "ArrowDown" || event.code === "ArrowRight") {
-      if (ownsArrows(active)) return;
+      if (ownsArrows(active, event.code)) return;
       event.preventDefault();
       this.move(container, 1);
       return;
     }
     if (event.code === "ArrowUp" || event.code === "ArrowLeft") {
-      if (ownsArrows(active)) return;
+      if (ownsArrows(active, event.code)) return;
       event.preventDefault();
       this.move(container, -1);
       return;

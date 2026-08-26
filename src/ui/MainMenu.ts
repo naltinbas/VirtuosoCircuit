@@ -2,6 +2,7 @@
 
 import type { AppApi } from "../app/App";
 import type { PlayMode } from "../app/GameState";
+import { focusVisibly } from "./KeyboardNav";
 import { button, el, type Screen } from "./UIManager";
 
 /** The one line that opens the game, repeated at the top of the credits. */
@@ -86,7 +87,7 @@ export class MainMenu implements Screen {
     this.dialogOpen = true;
     this.dialog.hidden = false;
     this.menuList.setAttribute("inert", "");
-    this.confirmButton.focus();
+    focusVisibly(this.confirmButton);
   }
 
   private closeDialog(): void {
@@ -99,7 +100,7 @@ export class MainMenu implements Screen {
     this.dialog.hidden = true;
     this.menuList.removeAttribute("inert");
     const first = this.menuList.querySelector<HTMLElement>("[data-autofocus]");
-    first?.focus();
+    if (first !== null) focusVisibly(first);
   }
 
   private confirmReset(): void {

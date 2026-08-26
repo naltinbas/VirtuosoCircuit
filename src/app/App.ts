@@ -735,10 +735,16 @@ export class App implements AppApi {
     this.input.clearHeld();
     session.game.cancelHolds();
     this.clearAutoHold();
+    // The count-in clicks are booked at absolute audio times, so a seek that
+    // re-anchors the clock leaves them pointing at song positions that no
+    // longer mean anything.
+    this.cancelCountdown();
     session.game.rearmFrom(ms);
     session.game.skipBefore(ms);
     this.clock.seek(ms);
     this.transport.seek();
+    // After clock.seek, so the new anchor is the one the clicks are booked on.
+    if (this.router.state === "COUNTDOWN" && this.clock.running) this.scheduleCountdown();
     this.renderer.clearEffects();
     this.resetFlashes();
     this.resetAutoplayCursor(ms);

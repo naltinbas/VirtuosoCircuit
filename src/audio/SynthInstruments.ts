@@ -57,7 +57,7 @@ const TRIM: Record<InstrumentId, number> = {
   percussion: 0.5,
 };
 
-export function midiToHz(midi: number): number {
+function midiToHz(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
@@ -571,7 +571,7 @@ export class SynthInstruments implements Synth {
     this.cachedCtx = ctx;
     this.partNodes.clear();
     this.noise = null;
-    this.voices.length = 0;
+    for (const voice of [...this.voices]) this.retire(voice);
   }
 
   private stealOldest(now: number): void {

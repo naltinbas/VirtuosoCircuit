@@ -25,30 +25,6 @@ export type SfxName =
   | "metronome-weak"
   | "calibration-tone";
 
-export const SFX_NAMES: readonly SfxName[] = [
-  "hit-radiant",
-  "hit-precise",
-  "hit-good",
-  "hit-faint",
-  "miss",
-  "hold-tick",
-  "menu-move",
-  "menu-select",
-  "menu-back",
-  "pause",
-  "resume",
-  "countdown-tick",
-  "countdown-go",
-  "phrase",
-  "surge-start",
-  "surge-end",
-  "fail",
-  "complete",
-  "metronome-strong",
-  "metronome-weak",
-  "calibration-tone",
-];
-
 /** Exponential ramps cannot reach zero, so silence is this instead. */
 const FLOOR = 0.0001;
 const NOISE_SECONDS = 0.5;

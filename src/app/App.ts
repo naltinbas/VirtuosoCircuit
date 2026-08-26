@@ -841,8 +841,8 @@ export class App implements AppApi {
   }
 
   private setDebugFlag(flag: keyof DebugFlags, on: boolean): void {
-    // Autoplay belongs to the session, which owns the flag as well, so the
-    // overlay never writes it here and never short-circuits on a stale value.
+    // Autoplay lives on the session, and setAutoplay writes the flag with it.
+    // Going straight there keeps a stale flag from swallowing the click.
     if (flag === "autoplay") {
       this.setAutoplay(on);
       return;

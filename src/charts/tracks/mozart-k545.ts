@@ -255,22 +255,22 @@ const THEME_LOW = "0h/1.5 r/0.5 1/1 2 | 0h/1 r/0.5 1/0.5 2/1 1";
 const nOpening = [
   ...phrase("a1", 0, THEME),
   ...phrase("a2", 8, THEME_HIGH),
-  ...phrase("b1", 16, fill(QUARTERS8, "0 1 3 4 3 1 0 1")),
-  ...phrase("b2", 24, fill(QUARTERS8, "1 3 2 4 4 3 2 1")),
+  ...phrase("b1", 16, `${fill(QUARTERS, "0 1 3 4")} 3h/1.5 r/0.5 0/1 1`),
+  ...phrase("b2", 24, fill(QUARTERS8, "1 3 2 4 [3,4]! 3 2 1")),
 ];
 
 const noviceChart = chart(
   "novice",
   nOpening,
-  phrase("b3", 32, fill(QUARTERS8, "1 2 4 2 1 0 1 2")),
+  phrase("b3", 32, `${fill(QUARTERS, "1 2 4 2")} 1h/1.5 r/0.5 0/1 2`),
   phrase("b4", 40, `${fill(QUARTERS, "4 3 2 2")} 3/1 2 3h/1.5`),
   phrase("c1", 48, THEME_HIGH),
   phrase("c2", 56, THEME_LOW),
-  phrase("d1", 64, fill(QUARTERS8, "1 3 4 3 3 1 0 2")),
+  phrase("d1", 64, `${fill(QUARTERS, "1 3 4 3")} 3h/1.5 r/0.5 0/1 2`),
   phrase("d2", 72, fill(QUARTERS8, "3 2 3 3 2 3 4 3")),
   phrase("d3", 80, "2/2 3/1 2 2h/3"),
   shiftEvents(nOpening, 88, "-r"),
-  phrase("e1", 120, fill(QUARTERS8, "3 2 1 0 1 2 4 3")),
+  phrase("e1", 120, `${fill(QUARTERS, "3 2 1 0")} 1h/1.5 r/0.5 2/1 4`),
   phrase("e2", 128, `${fill(QUARTERS, "4 3 2 1")} 1h/1.5 r/0.5 2/1 3`),
   phrase("e3", 136, "4/2 3/1 2 4/1 3 2 1"),
   phrase("e4", 144, fill(QUARTERS8, "0 4 2 0 4 1 1 4")),
@@ -288,7 +288,7 @@ const aOpening = [
   ...phrase("b1", 16, fill(EIGHTHS, "0 1 1 2 3 3 4 3")),
   ...phrase("b2", 20, fill(EIGHTHS, "3 2 1 1 0 1 1 2")),
   ...phrase("b3", 24, fill(EIGHTHS, "1 2 3 2 2 3 3 4")),
-  ...phrase("b4", 28, fill(QUARTERS, "4 3 2 1")),
+  ...phrase("b4", 28, fill(QUARTERS, "[3,4]! 3 2 1")),
   ...backing(29.5, "0/0.5 r/1.5 0/0.5"),
 ];
 

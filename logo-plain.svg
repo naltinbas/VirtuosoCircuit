@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2301 430" width="2301" height="430" role="img" aria-label="Virtuoso Circuit">
+  <title>Virtuoso Circuit</title>
+  <defs>
+    <linearGradient id="p-rule" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7b5cff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#7b5cff" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#7b5cff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(64,65) scale(0.585938)">
+  <defs>
+    <radialGradient id="p-halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.30" stop-color="#7b5cff" stop-opacity="0"/>
+      <stop offset="0.60" stop-color="#7b5cff" stop-opacity="0.30"/>
+      <stop offset="0.80" stop-color="#7b5cff" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#7b5cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="p-gate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7b5cff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#7b5cff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#7b5cff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="248" fill="url(#p-halo)"/>
+  <path d="M398.84,398.84L408.03,408.03M308.28,451.12L311.65,463.67M203.72,451.12L200.35,463.67M113.16,398.84L103.97,408.03M60.88,308.28L48.33,311.65M60.88,203.72L48.33,200.35M203.72,60.88L200.35,48.33M308.28,60.88L311.65,48.33" fill="none" stroke="#2a3a7a" stroke-width="5" stroke-linecap="butt"/>
+  <g stroke="#05081c" stroke-width="6" stroke-linejoin="round">
+    <path d="M247.96,64.17A192,192 0 0 1 415.18,148.63L380.36,172.12A150,150 0 0 0 249.72,106.13Z" fill="#9b7bff"/>
+    <path d="M88.4,162.33A192,192 0 0 1 247.96,64.17L249.72,106.13A150,150 0 0 0 125.06,182.82Z" fill="#3fd8c7"/>
+    <path d="M88.4,349.67A192,192 0 0 1 88.4,162.33L125.06,182.82A150,150 0 0 0 125.06,329.18Z" fill="#ffb84d"/>
+    <path d="M247.96,447.83A192,192 0 0 1 88.4,349.67L125.06,329.18A150,150 0 0 0 249.72,405.87Z" fill="#f3f0ff"/>
+    <path d="M415.18,363.37A192,192 0 0 1 247.96,447.83L249.72,405.87A150,150 0 0 0 380.36,339.88Z" fill="#ff7a6b"/>
+    <path d="M107.42,88L165.99,88L256,261.53L346.01,88L404.58,88L256,374.47Z" fill="#f5f3ff" stroke-width="7"/>
+    <path d="M247.96,64.17A192,192 0 0 1 415.18,148.63L380.36,172.12A150,150 0 0 0 249.72,106.13Z" fill="#9b7bff"/>
+  </g>
+  <rect x="180" y="370" width="152" height="31" fill="url(#p-gate)"/>
+  <rect x="196" y="380" width="120" height="11" fill="#f5f3ff"/>
+  </g>
+
+  <g transform="translate(428,110) scale(1.3)">
+    <g fill="none" stroke="#f5f3ff" stroke-width="16" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="8">
+      <path d="M109.5,0V100"/>
+      <path d="M147.5,0V100"/>
+      <path d="M147.5,8H184.5A19,19 0 0 1 203.5,27A19,19 0 0 1 184.5,46H147.5"/>
+      <path d="M232.5,8H316.5"/>
+      <path d="M274.5,0V100"/>
+      <path d="M341,0V59.5A34,34 0 0 0 375,93.5A34,34 0 0 0 409,59.5V0"/>
+      <path d="M441.5,50A43.5,43.5 0 0 1 485,6.5A43.5,43.5 0 0 1 528.5,50A43.5,43.5 0 0 1 485,93.5A43.5,43.5 0 0 1 441.5,50Z"/>
+      <path d="M655.5,50A43.5,43.5 0 0 1 699,6.5A43.5,43.5 0 0 1 742.5,50A43.5,43.5 0 0 1 699,93.5A43.5,43.5 0 0 1 655.5,50Z"/>
+      <path d="M886.13,25.05A43.5,43.5 0 0 0 825.55,14.37A43.5,43.5 0 0 0 814.87,74.95A43.5,43.5 0 0 0 875.45,85.63A43.5,43.5 0 0 0 886.13,74.95"/>
+      <path d="M927,0V100"/>
+      <path d="M965,0V100"/>
+      <path d="M965,8H1002A19,19 0 0 1 1021,27A19,19 0 0 1 1002,46H965"/>
+      <path d="M1137.63,25.05A43.5,43.5 0 0 0 1077.05,14.37A43.5,43.5 0 0 0 1066.37,74.95A43.5,43.5 0 0 0 1126.95,85.63A43.5,43.5 0 0 0 1137.63,74.95"/>
+      <path d="M1177,0V59.5A34,34 0 0 0 1211,93.5A34,34 0 0 0 1245,59.5V0"/>
+      <path d="M1281.5,0V100"/>
+      <path d="M1307.5,8H1391.5"/>
+      <path d="M1349.5,0V100"/>
+    </g>
+    <g fill="#f5f3ff">
+      <path d="M0,0L17.4,0L42,58.57L66.6,0L84,0L42,100Z"/>
+      <path d="M151.54,48L173,48L219.5,100L198.04,100Z"/>
+      <path d="M615.93,19.02A13.69,13.69 0 0 0 596.59,18.02A13.69,13.69 0 0 0 595.59,37.36A13.69,13.69 0 0 0 601.53,41.21L591.03,37.8A32.65,32.65 0 0 1 611.99,78.94A32.65,32.65 0 0 1 570.85,99.9A32.65,32.65 0 0 1 550,79.27L567.96,79.27A16.65,16.65 0 0 0 591.36,81.84A16.65,16.65 0 0 0 593.93,58.43A16.65,16.65 0 0 0 586.09,53.02L596.58,56.43A29.69,29.69 0 0 1 577.52,19.02A29.69,29.69 0 0 1 614.93,-0.05A29.69,29.69 0 0 1 634,19.02Z"/>
+      <path d="M969.04,48L990.5,48L1037,100L1015.54,100Z"/>
+    </g>
+  </g>
+
+  <rect x="428" y="283" width="1808.95" height="22" fill="url(#p-rule)"/>
+  <rect x="428" y="292.5" width="1808.95" height="3" fill="#f5f3ff" opacity="0.85"/>
+  <g stroke="#05081c" stroke-width="3" stroke-linejoin="round">
+    <path d="M572.72,266L598.48,314.16L546.96,314.16Z" fill="#9b7bff"/>
+    <path d="M572.72,281.68L584.05,302.87L561.38,302.87Z" fill="none" stroke-width="2.4"/>
+    <path d="M952.6,266L976.68,294L952.6,322L928.52,294Z" fill="#3fd8c7"/>
+    <path d="M952.6,281.68L963.19,294L952.6,306.32L942,294Z" fill="none" stroke-width="2.4"/>
+    <path d="M1306.16,294a26.32,26.32 0 1 0 52.64,0a26.32,26.32 0 1 0 -52.64,0Z" fill="#ffb84d"/>
+    <path d="M1320.89,294a11.58,11.58 0 1 0 23.16,0a11.58,11.58 0 1 0 -23.16,0Z" fill="none" stroke-width="2.4"/>
+    <path d="M1689.95,271.6H1734.75V316.4H1689.95Z" fill="#f3f0ff"/>
+    <path d="M1702.5,284.14H1722.21V303.86H1702.5Z" fill="none" stroke-width="2.4"/>
+    <path d="M2092.23,266L2099.8,283.58L2118.86,285.35L2104.48,297.98L2108.69,316.65L2092.23,306.88L2075.78,316.65L2079.98,297.98L2065.6,285.35L2084.66,283.58Z" fill="#ff7a6b"/>
+    <path d="M2092.23,281.68L2095.57,289.42L2103.95,290.19L2097.62,295.75L2099.48,303.97L2092.23,299.67L2084.99,303.97L2086.84,295.75L2080.52,290.19L2088.9,289.42Z" fill="none" stroke-width="2.4"/>
+  </g>
+</svg>

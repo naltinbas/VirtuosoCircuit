@@ -1,6 +1,6 @@
-# Virtuoso Circuit
+<p align="center"><img src="logo.svg" alt="Virtuoso Circuit" width="720"></p>
 
-A five-lane keyboard rhythm game that runs in the browser. Notes fall down a corridor toward the Resonance Gate, you press the lane key as each one crosses it, and the score, the Resonance Chain and the Aura Meter follow from how close you were. The setting is a concert hall that has been dark a long time: you play the signal conductor, and finishing a piece lights another wing and opens the next track. Ten pieces, all public-domain classical, all stored as note data in this repository and synthesized by the browser while you play. TypeScript, Vite 6, Canvas 2D, Web Audio, vitest. No runtime dependencies and no media files: apart from the code, the only thing in the build is a hand-written SVG favicon, and no sound, image or font is fetched or decoded.
+A five-lane keyboard rhythm game that runs in the browser. Notes fall down a corridor toward the Resonance Gate, you press the lane key as each one crosses it, and the score, the Resonance Chain and the Aura Meter follow from how close you were. The setting is a concert hall that has been dark a long time: you play the signal conductor, and finishing a piece lights another wing and opens the next track. Ten pieces, all public-domain classical, all stored as note data in this repository and synthesized by the browser while you play. TypeScript, Vite 6, Canvas 2D, Web Audio, vitest. No runtime dependencies and no media files: apart from the code, the only thing in the build is the hand-written SVG icon, and no sound, image or font is fetched or decoded.
 
 ## Tracks
 

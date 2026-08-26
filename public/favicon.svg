@@ -1,12 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9b7bff"/>
-      <stop offset="1" stop-color="#3fd8c7"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="14" fill="#070b1f"/>
-  <circle cx="32" cy="32" r="22" fill="none" stroke="url(#g)" stroke-width="3"/>
-  <path d="M32 14 L36.5 26.5 L50 32 L36.5 37.5 L32 50 L27.5 37.5 L14 32 L27.5 26.5 Z" fill="#ffb84d" stroke="#070b1f" stroke-width="2"/>
-  <circle cx="32" cy="32" r="4" fill="#f3f0ff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Virtuoso Circuit">
+  <title>Virtuoso Circuit</title>
+  <rect width="512" height="512" rx="112" ry="112" fill="#070b1f"/>
+  <rect width="512" height="512" rx="112" ry="112" fill="none" stroke="#111a3d" stroke-width="6"/>
+  <g stroke="#05081c" stroke-width="5" stroke-linejoin="round">
+    <path d="M247.71,58.17A198,198 0 0 1 420.15,145.28L370.41,178.83A138,138 0 0 0 250.22,118.12Z" fill="#9b7bff"/>
+    <path d="M83.16,159.4A198,198 0 0 1 247.71,58.17L250.22,118.12A138,138 0 0 0 135.54,188.68Z" fill="#3fd8c7"/>
+    <path d="M83.16,352.6A198,198 0 0 1 83.16,159.4L135.54,188.68A138,138 0 0 0 135.54,323.32Z" fill="#ffb84d"/>
+    <path d="M247.71,453.83A198,198 0 0 1 83.16,352.6L135.54,323.32A138,138 0 0 0 250.22,393.88Z" fill="#f3f0ff"/>
+    <path d="M420.15,366.72A198,198 0 0 1 247.71,453.83L250.22,393.88A138,138 0 0 0 370.41,333.17Z" fill="#ff7a6b"/>
+    <path d="M92.3,96L169.7,96L256,236.84L342.3,96L419.7,96L256,363.16Z" fill="#f5f3ff" stroke-width="6"/>
+    <path d="M247.71,58.17A198,198 0 0 1 420.15,145.28L370.41,178.83A138,138 0 0 0 250.22,118.12Z" fill="#9b7bff"/>
+  </g>
 </svg>

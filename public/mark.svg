@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Virtuoso Circuit">
+  <title>Virtuoso Circuit</title>
+  <rect width="512" height="512" rx="112" ry="112" fill="#070b1f"/>
+  <rect width="512" height="512" rx="112" ry="112" fill="none" stroke="#111a3d" stroke-width="4"/>
+  <defs>
+    <radialGradient id="m-halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0.30" stop-color="#7b5cff" stop-opacity="0"/>
+      <stop offset="0.60" stop-color="#7b5cff" stop-opacity="0.30"/>
+      <stop offset="0.80" stop-color="#7b5cff" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#7b5cff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="m-gate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7b5cff" stop-opacity="0"/>
+      <stop offset="0.5" stop-color="#7b5cff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#7b5cff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="248" fill="url(#m-halo)"/>
+  <path d="M398.84,398.84L408.03,408.03M308.28,451.12L311.65,463.67M203.72,451.12L200.35,463.67M113.16,398.84L103.97,408.03M60.88,308.28L48.33,311.65M60.88,203.72L48.33,200.35M203.72,60.88L200.35,48.33M308.28,60.88L311.65,48.33" fill="none" stroke="#2a3a7a" stroke-width="5" stroke-linecap="butt"/>
+  <g stroke="#05081c" stroke-width="6" stroke-linejoin="round">
+    <path d="M247.96,64.17A192,192 0 0 1 415.18,148.63L380.36,172.12A150,150 0 0 0 249.72,106.13Z" fill="#9b7bff"/>
+    <path d="M88.4,162.33A192,192 0 0 1 247.96,64.17L249.72,106.13A150,150 0 0 0 125.06,182.82Z" fill="#3fd8c7"/>
+    <path d="M88.4,349.67A192,192 0 0 1 88.4,162.33L125.06,182.82A150,150 0 0 0 125.06,329.18Z" fill="#ffb84d"/>
+    <path d="M247.96,447.83A192,192 0 0 1 88.4,349.67L125.06,329.18A150,150 0 0 0 249.72,405.87Z" fill="#f3f0ff"/>
+    <path d="M415.18,363.37A192,192 0 0 1 247.96,447.83L249.72,405.87A150,150 0 0 0 380.36,339.88Z" fill="#ff7a6b"/>
+    <path d="M107.42,88L165.99,88L256,261.53L346.01,88L404.58,88L256,374.47Z" fill="#f5f3ff" stroke-width="7"/>
+    <path d="M247.96,64.17A192,192 0 0 1 415.18,148.63L380.36,172.12A150,150 0 0 0 249.72,106.13Z" fill="#9b7bff"/>
+  </g>
+  <rect x="180" y="370" width="152" height="31" fill="url(#m-gate)"/>
+  <rect x="196" y="380" width="120" height="11" fill="#f5f3ff"/>
+</svg>

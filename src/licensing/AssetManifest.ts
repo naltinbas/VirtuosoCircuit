@@ -39,14 +39,15 @@ const NOT_APPLICABLE = "Not applicable";
 /** Rows that are not tracks. They come last in the table. */
 const NON_TRACK_ENTRIES: readonly ManifestEntry[] = [
   {
-    asset: "public/favicon.svg",
+    asset: "Logo and icon",
     composer: NOT_APPLICABLE,
     compositionStatus: "Original artwork drawn for this game",
-    arrangementSource: "Hand-written SVG in this repository",
+    arrangementSource:
+      "Hand-written SVG in this repository. The lettering is constructed geometry on a 100 unit cap grid, not an outlined typeface, so no font file is involved.",
     audioSource: NOT_APPLICABLE,
     licenseRationale: "Part of this project's own source. No third-party rights are involved.",
     attributionRequired: false,
-    sourceNote: "public/favicon.svg",
+    sourceNote: "logo.svg, logo-plain.svg, public/mark.svg, public/favicon.svg",
   },
   {
     asset: "Interface and gameplay sounds",

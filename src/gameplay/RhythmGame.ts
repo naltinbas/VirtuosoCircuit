@@ -233,6 +233,8 @@ export class RhythmGame {
     if (this.finishedFlag) return null;
     const t = songMs - this.offsetMs;
     this.sweep(t);
+    // The step 0 sweep can end the run, and a finished run judges nothing.
+    if (this.finishedFlag) return null;
     const note = this.scheduler.candidate(lane, t, this.judge.missWindowMs);
     if (note === null) return null;
     const deltaMs = t - note.note.timeMs;
@@ -247,6 +249,7 @@ export class RhythmGame {
     if (this.finishedFlag) return;
     const t = songMs - this.offsetMs;
     this.sweep(t);
+    if (this.finishedFlag) return;
     this.holds.release(lane, t);
     this.settleAura();
   }
@@ -365,8 +368,12 @@ export class RhythmGame {
   }
 
   private sweep(t: number): void {
+    if (this.finishedFlag) return;
     this.scheduler.sweep(t, this.judge.missWindowMs, (note, at) => {
       this.resolveMiss(note, this.judge.autoMissDeltaMs, at);
+      // An auto-miss can empty the meter part-way through the walk. The run is
+      // over at that point, so the notes behind it stay pending.
+      return !this.finishedFlag;
     });
   }
 

@@ -347,3 +347,73 @@ describe("Focus Surge", () => {
     expect(game.summary().holdTicks).toBe(3);
   });
 });
+
+describe("the end of a run", () => {
+  /** Six notes 20 ms apart, so one update leaves all of them overdue at once. */
+  const CLUSTER: EventSpec[] = laneRun(6, 1000, 20);
+
+  it("stops the auto-miss sweep at the note that emptied the meter", () => {
+    const game = gameFor(CLUSTER, { durationMs: 40000 });
+    const names = collectNames(game);
+    // One miss from empty, so the first note of the cluster ends the run.
+    game.debugSetAura(-AURA_CONFIG.miss);
+    game.update(1400);
+    expect(names).toEqual(["judgment:miss:e0L0", "auraWarning", "fail"]);
+    expect(game.snapshot().misses).toBe(1);
+    expect(game.snapshot().judgedCount).toBe(1);
+    // Nothing else resolves afterwards either.
+    game.update(9000);
+    expect(names).toEqual(["judgment:miss:e0L0", "auraWarning", "fail"]);
+  });
+
+  it("reports the same summary inside the fail handler and after the update", () => {
+    const game = gameFor(CLUSTER, { durationMs: 40000 });
+    game.debugSetAura(-AURA_CONFIG.miss);
+    let inside: string | null = null;
+    game.events.on("fail", () => {
+      inside = JSON.stringify(game.summary());
+    });
+    game.update(1400);
+    expect(inside).toBe(JSON.stringify(game.summary()));
+  });
+
+  it("ignores a press whose own sweep just failed the run", () => {
+    const game = gameFor(
+      [
+        { timeMs: 1000, lanes: [0] },
+        { timeMs: 1180, lanes: [1] },
+      ],
+      { durationMs: 40000 },
+    );
+    game.debugSetAura(-AURA_CONFIG.miss);
+    game.update(1100);
+    const names = collectNames(game);
+    // The note at 1000 is overdue at 1205, and missing it empties the meter.
+    expect(game.press(1, 1205)).toBeNull();
+    expect(names).toEqual(["judgment:miss:e0L0", "fail"]);
+    const snap = game.snapshot();
+    expect(snap.score).toBe(0);
+    expect(snap.combo).toBe(0);
+    expect(snap.judgedCount).toBe(1);
+    expect(snap.aura).toBe(0);
+  });
+
+  it("ignores a release whose own sweep just failed the run", () => {
+    const game = gameFor(
+      [
+        { timeMs: 1000, lanes: [1], durationMs: 600 },
+        { timeMs: 1400, lanes: [0] },
+      ],
+      { durationMs: 40000 },
+    );
+    game.press(1, 1000);
+    game.debugSetAura(-AURA_CONFIG.miss);
+    const names = collectNames(game);
+    // The sweep the release runs first misses the note at 1400 and fails the
+    // run, which drops the hold quietly, so the release itself has no work.
+    game.release(1, 1650);
+    expect(names).toEqual(["judgment:miss:e1L0", "auraWarning", "holdEnd", "fail"]);
+    expect(game.summary().earlyReleases).toBe(0);
+    expect(game.snapshot().holdingLanes[1]).toBe(false);
+  });
+});

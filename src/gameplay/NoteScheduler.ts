@@ -32,7 +32,8 @@ export interface NoteView {
   holdProgress: number;
 }
 
-export type MissHandler = (note: NoteRuntime, atSongMs: number) => void;
+/** Returning false stops the walk, leaving the notes behind the cursor pending. */
+export type MissHandler = (note: NoteRuntime, atSongMs: number) => boolean | void;
 
 function makeRuntime(note: NoteInstance): NoteRuntime {
   return { note, state: "pending", judgment: null, deltaMs: 0, hitSongMs: 0, holdTicksPaid: 0, holdProgress: 0 };
@@ -83,14 +84,15 @@ export class NoteScheduler {
   /**
    * Auto-misses every pending note that `t` has left behind, oldest first. A
    * `t` earlier than the last sweep is a no-op because the cursor never walks
-   * backwards on its own.
+   * backwards on its own. The handler stops the walk by returning false, which
+   * is how a run that ends part-way through keeps the rest of the notes.
    */
   sweep(t: number, missWindowMs: number, onMiss: MissHandler): void {
     while (this.missCursor < this.notes.length) {
       const entry = this.notes[this.missCursor];
       if (entry.note.timeMs + missWindowMs >= t) break;
       this.missCursor++;
-      if (entry.state === "pending") onMiss(entry, t);
+      if (entry.state === "pending" && onMiss(entry, t) === false) return;
     }
   }
 

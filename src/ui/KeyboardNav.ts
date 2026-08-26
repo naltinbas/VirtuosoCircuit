@@ -57,14 +57,20 @@ export class KeyboardNav {
     return [...found].filter((element) => {
       if (element.hasAttribute("disabled") || element.getAttribute("aria-disabled") === "true") return false;
       if (element.hidden) return false;
+      // Inertness comes from an ancestor, which the element's own property does
+      // not report, and focus() on an inert element is silently ignored.
+      if (element.closest("[inert]") !== null) return false;
       return element.offsetParent !== null || element === element.ownerDocument.activeElement;
     });
   }
 
   /** Focuses the element the screen asked for, or the first one it offers. */
   focusFirst(container: HTMLElement): void {
+    const items = KeyboardNav.items(container);
     const preferred = container.querySelector<HTMLElement>("[data-autofocus]");
-    const target = preferred ?? KeyboardNav.items(container)[0] ?? container;
+    // A screen with a dialog has an autofocus target on each side of it, so the
+    // preferred one counts only while it is navigable.
+    const target = (preferred !== null && items.includes(preferred) ? preferred : items[0]) ?? container;
     target.focus();
   }
 

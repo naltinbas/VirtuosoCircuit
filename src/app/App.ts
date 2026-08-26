@@ -813,7 +813,10 @@ export class App implements AppApi {
 
   private setAutoplay(on: boolean): void {
     const session = this.current;
+    // With no run to play there is nothing to turn on, and the overlay's
+    // checkbox says so on its next refresh.
     if (!session) return;
+    this.debugFlags.autoplay = on;
     session.autoplay = on;
     if (on) {
       session.assisted = true;
@@ -830,12 +833,14 @@ export class App implements AppApi {
   }
 
   private setDebugFlag(flag: keyof DebugFlags, on: boolean): void {
-    if (this.debugFlags[flag] === on) return;
-    this.debugFlags[flag] = on;
+    // Autoplay belongs to the session, which owns the flag as well, so the
+    // overlay never writes it here and never short-circuits on a stale value.
     if (flag === "autoplay") {
       this.setAutoplay(on);
       return;
     }
+    if (this.debugFlags[flag] === on) return;
+    this.debugFlags[flag] = on;
     if (flag !== "slowMotion") return;
     const session = this.current;
     if (!session) return;
@@ -1267,6 +1272,7 @@ export class App implements AppApi {
       session.game.cancelHolds();
       session.autoplay = false;
     }
+    this.debugFlags.autoplay = false;
     this.clearAutoHold();
     this.current = null;
   }

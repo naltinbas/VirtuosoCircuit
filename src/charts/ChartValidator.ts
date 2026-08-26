@@ -200,7 +200,13 @@ export function validateChart(
   // trills must alternate lanes and contain only single notes.
   const phrases = new Map<string, typeof events>();
   for (const e of events) {
-    if (!e.phraseId) continue;
+    if (e.phraseId === undefined) continue;
+    // Imported JSON reaches here untyped, and a phrase id that is not a string
+    // would group under a key nothing can match and then break the trill check.
+    if (typeof e.phraseId !== "string" || e.phraseId.length === 0) {
+      push("error", "phrase-id", `event ${e.id} has a phrase id that is not a name`, e.id);
+      continue;
+    }
     let list = phrases.get(e.phraseId);
     if (!list) {
       list = [];
@@ -251,7 +257,12 @@ export function validateTrack(def: TrackDefinition, track: TrackChart): Validati
     "scoreSourceCredit",
     "licenseNotes",
   ] as const) {
-    if (!m[field] || m[field]!.trim().length === 0) push("error", "metadata", `metadata.${field} is empty`);
+    // Untyped JSON gets this far through the chart editor, where a truthy
+    // non-string used to throw out of the validator instead of being reported.
+    const value: unknown = m[field];
+    if (typeof value !== "string" || value.trim().length === 0) {
+      push("error", "metadata", `metadata.${field} must be a non-empty string`);
+    }
   }
   if (!/^[a-z0-9-]+$/.test(m.id)) push("error", "metadata", `track id "${m.id}" should be lowercase-kebab`);
   if (!(m.order >= 1)) push("error", "metadata", "metadata.order must be >= 1");

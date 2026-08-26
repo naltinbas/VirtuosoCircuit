@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { chart, lanes, shiftEvents, trill } from "../src/charts/Authoring";
 import { compileChart, compileTrack, mapperFor } from "../src/charts/ChartLoader";
-import { validateChart, validateTrack } from "../src/charts/ChartValidator";
+import { validateChart, validateTrack, validateTrackReport } from "../src/charts/ChartValidator";
 import { fixtureTrack } from "./fixtures";
 
 function codes(issues: { code: string; level: string }[], level = "error"): string[] {
@@ -111,6 +111,29 @@ describe("validateTrack", () => {
     def.tempoMap = [{ beat: 0, bpm: 100 }];
     const issues = validateTrack(def, compileTrack(def));
     expect(codes(issues)).toContain("charts");
+  });
+});
+
+describe("untyped imported data", () => {
+  it("reports a metadata field that is not a string instead of throwing", () => {
+    const def = fixtureTrack();
+    (def.metadata as unknown as Record<string, unknown>).title = 42;
+    const track = compileTrack(def);
+    const report = validateTrackReport(def, track);
+    expect(report.ok).toBe(false);
+    expect(report.errors.map((i) => i.message)).toContain("metadata.title must be a non-empty string");
+  });
+  it("reports a phrase id that is not a name instead of throwing", () => {
+    const def = fixtureTrack();
+    const track = compileTrack(def);
+    const bad = compileChart(
+      {
+        difficulty: "novice",
+        events: [{ beat: 0, lanes: [0], phraseId: 5 as unknown as string }],
+      },
+      mapperFor(track),
+    );
+    expect(codes(validateChart(bad, track))).toContain("phrase-id");
   });
 });
 

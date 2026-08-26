@@ -16,7 +16,7 @@ import {
   type TrackChart,
   type TrackDefinition,
 } from "../charts/ChartTypes";
-import { validateTrackReport } from "../charts/ChartValidator";
+import { validateTrackReport, type ValidationReport } from "../charts/ChartValidator";
 import { TRACK_DEFINITIONS, getTrack, getTrackDefinition } from "../charts/TrackCatalog";
 import { LANE_IDENTITIES } from "../app/Config";
 import { formatClock } from "../utils/TimeUtils";
@@ -376,7 +376,13 @@ export class ChartEditor implements Screen {
       this.writeReport([`${file.name} did not compile: ${message(error)}`]);
       return;
     }
-    const report = validateTrackReport(parsed, compiled);
+    let report: ValidationReport;
+    try {
+      report = validateTrackReport(parsed, compiled);
+    } catch (error) {
+      this.writeReport([`${file.name} could not be validated: ${message(error)}`]);
+      return;
+    }
     const meta = compiled.metadata;
     const lines = [
       `${meta.title} (${meta.id}), ${formatClock(meta.durationMs)}, ${compiled.music.length} music notes.`,

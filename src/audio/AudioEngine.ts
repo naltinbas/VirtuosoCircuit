@@ -81,6 +81,7 @@ export class AudioEngine implements AudioGraph {
   private sfxGain: GainNode | null = null;
 
   private silent = false;
+  private silentShiftMs = 0;
   private unlockPromise: Promise<boolean> | null = null;
 
   private readonly offsets: number[] = [];
@@ -169,7 +170,7 @@ export class AudioEngine implements AudioGraph {
   sampleClock(): number {
     const perf = this.now();
     const ctx = this.audioContext();
-    const audio = ctx ? ctx.currentTime * 1000 : perf;
+    const audio = ctx ? ctx.currentTime * 1000 : perf + this.silentShiftMs;
     this.pushOffset(audio - perf);
     this.lastSamplePerfMs = perf;
     this.readOutputLatency();
@@ -179,7 +180,7 @@ export class AudioEngine implements AudioGraph {
   nowMs(): number {
     this.sampleIfStale();
     const ctx = this.audioContext();
-    return ctx ? ctx.currentTime * 1000 : this.now();
+    return ctx ? ctx.currentTime * 1000 : this.now() + this.silentShiftMs;
   }
 
   perfToAudioMs(perfMs: number): number {
@@ -286,10 +287,14 @@ export class AudioEngine implements AudioGraph {
 
   private goSilent(reason: string): void {
     if (this.silent) return;
+    // The silent clock continues the timeline the context was on, so a clock
+    // anchored to audio time does not jump by the page-to-context gap. With no
+    // context ever built the shift is 0 and nowMs() is performance.now().
+    this.silentShiftMs = this.context ? this.context.currentTime * 1000 - this.now() : 0;
     this.silent = true;
     this.offsets.length = 0;
     this.offsetCursor = 0;
-    this.offsetMs = 0;
+    this.offsetMs = this.silentShiftMs;
     this.latencyMs = 0;
     this.latencySupported = false;
     this.voices = 0;

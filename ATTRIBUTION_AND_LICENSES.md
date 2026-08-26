@@ -61,6 +61,7 @@ Condensed from the first movement as the arranger knows the published score; the
 
 **Brandenburg Concerto No. 3 in G major, BWV 1048** (`src/charts/tracks/bach-brandenburg-3.ts`)
 Bars 1 to 26 of the first movement, transcribed from the public-domain score and condensed and re-scored for four synth parts. The two violin lines and the continuo bass follow the score, with the second violin line an octave down through the ritornello; the harpsichord realises the figured bass. No external MIDI file, edition or recording was used.
+
 ## Composition credits
 
 Every piece played in this game is a public-domain composition. The works, in the order the game lists them:

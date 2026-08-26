@@ -201,26 +201,34 @@ export class InputManager extends EventEmitter<InputEvents> {
     if (!gameplay && state !== "PAUSED") return;
 
     if (RESTART_KEYS.includes(code)) {
+      event.stopPropagation();
       this.emit("shortcut", { action: "restart", perfTs });
       return;
     }
     if (PRACTICE_KEYS.includes(code)) {
+      // Tab still moves focus inside the pause menu, so the menu keeps the
+      // event; only the practice studio treats it as a shortcut.
+      if (gameplay) event.stopPropagation();
       this.emit("shortcut", { action: "practicePanel", perfTs });
       return;
     }
     if (PAUSE_KEYS.includes(code)) {
       // Escape in the pause menu belongs to the menu itself, which knows
       // whether a dialog is open on top of it.
-      if (gameplay || code !== "Escape") this.emit("shortcut", { action: "pause", perfTs });
+      if (!gameplay && code === "Escape") return;
+      event.stopPropagation();
+      this.emit("shortcut", { action: "pause", perfTs });
       return;
     }
     if (!gameplay) return;
     if (SURGE_KEYS.includes(code)) {
+      event.stopPropagation();
       this.emit("shortcut", { action: "focusSurge", perfTs });
       return;
     }
     const lane = this.bindings.laneForCode(code);
     if (lane === null) return;
+    event.stopPropagation();
     if (this.heldState.down(lane, code)) this.emit("lanePress", { lane, code, perfTs });
   };
 
@@ -232,6 +240,7 @@ export class InputManager extends EventEmitter<InputEvents> {
     const gameplay = GAMEPLAY_STATES.has(state);
     if (!gameplay && isTextTarget(event.target)) return;
     if (this.shouldPrevent(code, state)) event.preventDefault();
+    if (gameplay && this.bindings.isLaneCode(code)) event.stopPropagation();
     const release = this.heldState.up(code);
     if (release === null || !release.released) return;
     if (!gameplay) return;

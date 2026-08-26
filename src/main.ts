@@ -1,5 +1,11 @@
-// Placeholder entry; App.ts replaces this once the runtime is wired up.
-import { TRACK_DEFINITIONS } from "./charts/TrackCatalog";
+import { App } from "./app/App";
+import { DEBUG_ENABLED } from "./app/Config";
+import "./ui/styles.css";
 
-const ui = document.getElementById("ui");
-if (ui) ui.textContent = `Virtuoso Circuit: ${TRACK_DEFINITIONS.length} tracks in the catalog`;
+const root = document.getElementById("app");
+if (!root) throw new Error("The page has no #app element");
+
+const app = new App(root);
+app.start();
+
+if (DEBUG_ENABLED) window.vc = app.debugApi();

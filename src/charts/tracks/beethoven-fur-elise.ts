@@ -1,11 +1,11 @@
-// Beethoven, Bagatelle No. 25 in A minor, WoO 59, "Fur Elise": the A section.
+// Beethoven, Bagatelle No. 25 in A minor, WoO 59, "Für Elise": the A section.
 //
 // The A section is built from one four-bar period: the E5 D#5 alternation
 // falling through B4 D5 C5 to A4, then three bars that answer it over the
 // left-hand arpeggios A2 E3 A3, E2 E3 G#3, A2 E3 A3. The period comes in two
-// forms, one that turns back to the theme and one that closes E4 C5 B4 A4 on
-// the tonic. This arrangement plays the pair twelve times, thin at first and
-// filling out as it goes, and ends on an A minor chord.
+// forms, one that climbs A4 B4 C5 back to the theme and one that closes
+// E4 C5 B4 A4 on the tonic. This arrangement plays the pair twelve times,
+// thin at first and filling out as it goes, and ends on an A minor chord.
 //
 // 3/8 at 200 eighths per minute, 100 bars, 90 seconds. Bar 1 and bar 2 are an
 // accompaniment introduction so the upbeat E5 D#5 falls on the last beat of
@@ -31,15 +31,16 @@ const periodStart = (i: number): number => FIRST + i * PERIOD;
 // Arrangement
 // ---------------------------------------------------------------------------
 
-// The eight sixteenths of the theme, from its downbeat. The upbeat pair that
-// leads into it is the tail of whatever comes before.
+// The six sixteenths of the theme bar. The upbeat pair that leads into it is
+// written as the tail of whatever comes before.
 const THEME = "E5/0.5 D#5 E5 B4 D5 C5";
 
-// Three answering bars. Each is an eighth held through the following rest,
-// then two sixteenths that lead into the next bar. The first form turns back
-// to the theme, the second closes on A4 before doing so.
-const ANSWER_TURN = "A4/2 C4/0.5 E4 A4/2 E4/0.5 G#4 B4/2 E5/0.5 D#5";
-const ANSWER_CLOSE = "A4/2 C4/0.5 E4 A4/2 E4/0.5 C5 B4/1 A4/1 E5/0.5 D#5";
+// Three answering bars. Each holds one melody note through the rest that
+// follows it and ends with two sixteenths of its own chord. The melody climbs
+// A4 B4 C5 over the arpeggios; the second form breaks the climb after B4 and
+// falls E4 C5 B4 A4 to the tonic instead.
+const ANSWER_TURN = "A4/2 C4/0.5 E4 B4/2 E4/0.5 G#4 C5/2 E5/0.5 D#5";
+const ANSWER_CLOSE = "A4/2 C4/0.5 E4 B4/2 E4/0.5 C5 B4/1 A4/1 E5/0.5 D#5";
 
 // Left hand: the arpeggio of each answering bar, rolled as sixteenths. The
 // theme bar itself is unaccompanied in the score, so the figure rests there.
@@ -72,9 +73,8 @@ for (let i = 0; i < PERIOD_COUNT; i++) {
   const p = periodStart(i);
   const statement = Math.floor(i / 2);
   const closing = i % 2 === 1;
-  melodyNotes.push(
-    ...melody(p, `${THEME} ${closing ? ANSWER_CLOSE : ANSWER_TURN}`, melodyVelocity(statement)).notes,
-  );
+  const answer = closing ? ANSWER_CLOSE : ANSWER_TURN;
+  melodyNotes.push(...melody(p, `${THEME} ${answer}`, melodyVelocity(statement)).notes);
   pluckNotes.push(...melody(p, ARPEGGIO, statement < 5 ? 0.45 : 0.55).notes);
   if (statement >= 2) padNotes.push(...melody(p, PAD, 0.3).notes);
   if (statement >= 3) bassNotes.push(...melody(p, BASS, 0.55).notes);
@@ -94,8 +94,9 @@ bassNotes.push(...melody(CODA, "A2/3 A2/3", 0.6).notes);
 // Lanes follow the shape of each phrase rather than absolute pitch, because
 // the theme sits high and its answer low. In the theme bar E5 is lane 4,
 // D#5 lane 3, B4 the dip to lane 2, D5 back to 4 and C5 to 3. In the
-// answering bars the rise C4 E4 A4 is lanes 0 1 2, the rise E4 G#4 B4 is
-// lanes 1 2 3, and the left-hand arpeggio notes take the two free low lanes.
+// answering bars the melody climbs A4 B4 C5 through lanes 2 3 4, the
+// sixteenths that end each bar rise into the next step (C4 E4 on lanes 0 and
+// 1, E4 G#4 on 1 and 2), and the arpeggio notes take the two free low lanes.
 
 /** Mark the first token of a passage as an accent. */
 function accented(text: string): string {
@@ -105,9 +106,9 @@ function accented(text: string): string {
 // Novice: the peak of the theme bar, the sustained melody note of each
 // answering bar and one note of the figure that leads out of it.
 const N_OPEN = "4/1 r/1 4/1 2h/1.5 r/0.5 0/1";
-const N_TURN = "2h/1.5 r/0.5 1/1 3h/1.5 r/0.5 4/1";
+const N_TURN = "3h/1.5 r/0.5 1/1 4h/1.5";
 // The closing bar falls B4 A4 at first and takes the bass with it later on.
-const N_CLOSE = ["2h/1.5 r/1.5 3/1 2!/1", "2h/1.5 r/2.5 [0,2]!/1"];
+const N_CLOSE = ["3h/1.5 r/1.5 3/1 2!/1", "3h/1.5 r/2.5 [0,2]!/1"];
 const N_CODA = "4!/1 r/2 [2,4]!/1";
 
 const noviceEvents: BeatEvent[] = [];
@@ -125,8 +126,8 @@ noviceEvents.push(...phrase("coda", CODA, N_CODA));
 // Apprentice: the head of the theme bar and its D5, then the sustained note
 // of every answering bar with the two sixteenths that lead out of it.
 const A_OPEN = "4/0.5 3 r/1 4/0.5 r/0.5 2h/1.5 r/0.5 0/0.5 1";
-const A_TURN = "2h/1.5 r/0.5 1/0.5 2 3h/1.5 r/0.5 4/0.5";
-const A_CLOSE = "2h/1.5 r/1 4/0.5 3 r/0.5 [0,2]!/0.5";
+const A_TURN = "3h/1.5 r/0.5 1/0.5 2 4/0.5 r/1.5 4/0.5";
+const A_CLOSE = "3h/1.5 r/1 4/0.5 3 r/0.5 [0,2]!/0.5";
 const A_CODA = "4!/0.5 3 r/2 [2,4]!/1";
 
 const apprenticeEvents: BeatEvent[] = [];
@@ -144,8 +145,8 @@ apprenticeEvents.push(...phrase("coda", CODA, A_CODA));
 const V_TRILL = "4/0.5 3 4 3 4";
 const V_TRILL_OPEN = "4/0.5 3 4! 3 4";
 const V_FALL = "2/0.5 4 3 2h/1.5";
-const V_RISE = "0/0.5 1 2h/1.5";
-const V_TURN = "1/0.5 2 3h/1.5";
+const V_RISE = "0/0.5 1 3h/1.5";
+const V_TURN = "1/0.5 2 4";
 const V_CLOSE = ["1/0.5 4 3 r/0.5 2!", "1/0.5 4 3 r/0.5 [1,2]!"];
 /** The two arpeggio notes that run on under a held melody note. */
 const V_UNDER = "0/0.5 1";

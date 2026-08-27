@@ -259,25 +259,28 @@ In the menus: arrow keys and Tab move focus, Enter or Space activates, Escape go
 
 ## Screenshots
 
-![Main menu](screenshots/main-menu.png)
+The highway, at the top difficulty each track offers. Every gem carries its lane's
+shape as well as its colour, so the five lanes stay apart without relying on colour.
 
-![Track select](screenshots/track-select.png)
+| | |
+|---|---|
+| ![The Toccata at maestro, with three chords on the approach](screenshots/toccata-maestro.png) | ![A hold ribbon and a chord on the cello prelude](screenshots/hold-and-chord.png) |
+| ![The Ode to Joy novice chart, one note at a time](screenshots/novice-chart.png) | ![A trill phrase in Fur Elise](screenshots/trill.png) |
+| ![Focus Surge running](screenshots/focus-surge.png) | ![The Aura Meter in its warning state](screenshots/aura-warning.png) |
+| ![The count-in before the first note](screenshots/countdown.png) | ![High contrast mode](screenshots/high-contrast.png) |
 
-![Gameplay](screenshots/gameplay.png)
+Those are at 1600x900. The highway is laid out in fractions of the canvas, so it
+holds at [1280x720](screenshots/gameplay-720p.png) too.
 
-![A hold and a chord on the highway](screenshots/hold-and-chord.png)
+Menus and the rest of the game.
 
-![Results](screenshots/results.png)
-
-![Practice studio](screenshots/practice.png)
-
-![Calibration](screenshots/calibration.png)
-
-![Settings](screenshots/settings.png)
-
-![High contrast mode](screenshots/high-contrast.png)
-
-![Debug overlay](screenshots/debug.png)
+| | |
+|---|---|
+| ![Main menu](screenshots/main-menu.png) | ![Track select](screenshots/track-select.png) |
+| ![Results](screenshots/results.png) | ![Practice studio](screenshots/practice.png) |
+| ![Calibration](screenshots/calibration.png) | ![Settings](screenshots/settings.png) |
+| ![Pause menu](screenshots/pause.png) | ![Debug overlay](screenshots/debug.png) |
+| ![Lane bindings](screenshots/controls.png) | ![Credits and licences](screenshots/credits.png) |
 
 ## Licence
 
